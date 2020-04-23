@@ -29,7 +29,6 @@ else:      process = cms.Process('RAW2DIGI', eras.Run3)
 
 # Import of standard configurations
 process.load('Configuration.StandardSequences.Services_cff')
-process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.EventContent.EventContent_cff')
 process.load('Configuration.StandardSequences.GeometryRecoDB_cff')
@@ -44,21 +43,40 @@ process.load("RecoLocalCalo.Configuration.hcalLocalReco_cff")
 process.GlobalTag = GlobalTag(process.GlobalTag, '106X_mcRun3_2021_realistic_v3', '')
 
 print "Using PeakFinderAlgorithm %s"%(PFA)
-if "1" not in PFA:
-    print "Only using 2 samples"
-    process.simHcalTriggerPrimitiveDigis.numberOfSamples = 2
-else:
-    print "Only using 1 sample"
-    process.simHcalTriggerPrimitiveDigis.numberOfSamples = 1
+if "PFA2p" in PFA:
+    print "Only using 3 samples"
+    process.simHcalTriggerPrimitiveDigis.numberOfSamplesQIE11 = 3
+    process.simHcalTriggerPrimitiveDigis.numberOfPresamplesQIE11 = 1
+    process.HcalTPGCoderULUT.contain1TS = False
+    process.HcalTPGCoderULUT.containPhaseNS = 3.0
 
-process.simHcalTriggerPrimitiveDigis.numberOfPresamples = 0
+if "PFA2" in PFA:
+    print "Only using 2 samples"
+    process.simHcalTriggerPrimitiveDigis.numberOfSamplesQIE11 = 2
+    process.simHcalTriggerPrimitiveDigis.numberOfPresamplesQIE11 = 0
+    process.HcalTPGCoderULUT.contain1TS = False
+    process.HcalTPGCoderULUT.containPhaseNS = 3.0
+
+elif "PFA1p" in PFA:
+    print "Only using 2 sample"
+    process.simHcalTriggerPrimitiveDigis.numberOfSamplesQIE11 = 2
+    process.simHcalTriggerPrimitiveDigis.numberOfPresamplesQIE11 = 1
+    process.HcalTPGCoderULUT.contain1TS = True
+    process.HcalTPGCoderULUT.containPhaseNS = 3.0
+
+elif "PFA1" in PFA:
+    print "Only using 1 sample"
+    process.simHcalTriggerPrimitiveDigis.numberOfSamplesQIE11 = 1
+    process.simHcalTriggerPrimitiveDigis.numberOfPresamplesQIE11 = 0
+    process.HcalTPGCoderULUT.contain1TS = True
+    process.HcalTPGCoderULUT.containPhaseNS = 3.0
 
 if PFA in pfaWeightsMap:
     print "Using weights: "
     print pfaWeightsMap[PFA]
-    process.simHcalTriggerPrimitiveDigis.PeakFinderAlgorithmWeights = pfaWeightsMap[PFA] 
+    process.simHcalTriggerPrimitiveDigis.weightsQIE11 = pfaWeightsMap[PFA] 
 else:
-    print "No weights defined for algo \"%s\"; defaulting to zero weights!"%(PFA)
+    print "No weights defined for algo \"%s\"; defaulting to PFA2 weights!"%(PFA)
 
 process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(-1)
@@ -104,9 +122,9 @@ elif "TTbar_50PU_OOT" in inputFile:
     process.GlobalTag = GlobalTag(process.GlobalTag, '106X_upgrade2021_realistic_v4', '')
     process.source = cms.Source("PoolSource",
         fileNames = cms.untracked.vstring(
-            'root://cmseos.fnal.gov///store/user/jhiltbra/HCAL_Trigger_Study/relval/CMSSW_10_6_0_pre4/RelValTTbar_13/GEN-SIM-DIGI-RAW/106X_upgrade2021_realistic_v4-v1_50PU/20000/TTbar-DIGI-RAW-50PU-OOT_1.root',
-            'root://cmseos.fnal.gov///store/user/jhiltbra/HCAL_Trigger_Study/relval/CMSSW_10_6_0_pre4/RelValTTbar_13/GEN-SIM-DIGI-RAW/106X_upgrade2021_realistic_v4-v1_50PU/20000/TTbar-DIGI-RAW-50PU-OOT_2.root',
-            'root://cmseos.fnal.gov///store/user/jhiltbra/HCAL_Trigger_Study/relval/CMSSW_10_6_0_pre4/RelValTTbar_13/GEN-SIM-DIGI-RAW/106X_upgrade2021_realistic_v4-v1_50PU/20000/TTbar-DIGI-RAW-50PU-OOT_3.root',
+            'root://cmseos.fnal.gov///store/user/jhiltbra/HCAL_Trigger_Study/relval/CMSSW_10_6_0_pre4/RelValTTbar_13/GEN-SIM-DIGI-RAW/106X_upgrade2021_realistic_v4-v1/20000/TTbar-DIGI-RAW-50PU-OOT_1.root',
+            'root://cmseos.fnal.gov///store/user/jhiltbra/HCAL_Trigger_Study/relval/CMSSW_10_6_0_pre4/RelValTTbar_13/GEN-SIM-DIGI-RAW/106X_upgrade2021_realistic_v4-v1/20000/TTbar-DIGI-RAW-50PU-OOT_2.root',
+            'root://cmseos.fnal.gov///store/user/jhiltbra/HCAL_Trigger_Study/relval/CMSSW_10_6_0_pre4/RelValTTbar_13/GEN-SIM-DIGI-RAW/106X_upgrade2021_realistic_v4-v1/20000/TTbar-DIGI-RAW-50PU-OOT_3.root',
     
         ),
         secondaryFileNames = cms.untracked.vstring(),
