@@ -9,7 +9,7 @@ def writeHeader(outfile):
     outfile.write("\def\\arraystretch{1.8}\n")
     outfile.write("     \\begin{tabular}{|c|c|c|}\n")
     outfile.write("         \hline\n")
-    outfile.write("         \\textbf{\\aieta} & \\textbf{PFA1'} & \\textbf{PFA2'}\\\\\\hline\n")
+    outfile.write("         \\textbf{\\aieta} & \\textbf{\\PFAonep} & \\textbf{\\PFAtwop}\\\\\\hline\n")
 
 def writeFooter(outfile):
 
