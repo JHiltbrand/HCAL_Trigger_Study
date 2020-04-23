@@ -23,7 +23,6 @@ def eventLoop(minTPET, nopuChain, ootChain, outfile):
 
     outfile.cd()
     h3_ratio = ROOT.TH3F("tpET_ratio", ";i#eta;TP E_{T} Ratio;", 257, -0.25, 128.25, 720, -0.014, 19.986, 28, 0.5, 28.5)
-    h3_corrl = ROOT.TH3F("tpET_corrl", ";TP E_{T} (t#bar{t} + 0PU);TP E_{T} (t#bar{t} + OOT PU);", 257, -0.25, 128.25, 257, -0.25, 128.25, 28, 0.5, 28.5)
 
     ootChain.SetBranchStatus("*", 0);      nopuChain.SetBranchStatus("*", 0)
     ootChain.SetBranchStatus("et", 1);     nopuChain.SetBranchStatus("et", 1)
@@ -98,39 +97,12 @@ def eventLoop(minTPET, nopuChain, ootChain, outfile):
                                 etFrac = iET / jET
                                 h3_ratio.Fill(jET, etFrac, abs(ieta))
 
-                            h3_corrl.Fill(jET, iET, abs(ieta))
                             hotStart = jTP
                             break
 
         print "Processed event %d => %d..."%(iEvent,NEVENTS)
 
-    return h3_corrl, h3_ratio
-
-# 2D histo of TP ET correlation for given range of ieta and range of TP ET
-def etCorrIetaSlicer(outfile, histo, ietaRange = []):
-
-    outfile.cd()
-
-    htemp = histo.Clone()
-
-    h2 = 0; ietaStr = ""
-    if len(ietaRange) == 0:
-        htemp.GetZaxis().SetRange(1, htemp.GetZaxis().GetNbins())
-    elif len(ietaRange) == 1:
-        htemp.GetZaxis().SetRange(htemp.GetZaxis().FindBin(ietaRange[0]),htemp.GetZaxis().FindBin(ietaRange[0]))
-        ietaStr = "ieta%d"%(ietaRange[0])
-    elif len(ietaRange) == 2:
-        htemp.GetZaxis().SetRange(htemp.GetZaxis().FindBin(ietaRange[0]),htemp.GetZaxis().FindBin(ietaRange[1]))
-        ietaStr = "ieta%dto%d"%(ietaRange[0],ietaRange[1])
-
-    htemp.GetZaxis().SetBit(ROOT.TAxis.kAxisRange)
-    h2 = htemp.Project3D("yx")
-
-    h2.SetTitle("")
-    h2.GetXaxis().SetTitle("TP E_{T} [GeV] (t#bar{t}+0PU)")
-    h2.GetYaxis().SetTitle("TP E_{T} [GeV] (t#bar{t}+OOT PU)")
-
-    h2.Write("TP_ETCorr_%s"%(ietaStr))
+    return h3_ratio
 
 # 2D histo of TP ET correlation for given range of ieta and range of TP ET
 def etRatioIetaSlicer(outfile, histo, ietaRange = []):
@@ -213,11 +185,9 @@ def analysis(NOPUFileDir, OOTFileDir, minTPET, tag):
     
         cOOT.AddFile("root://cmseos.fnal.gov/"+item)
 
-    tpCorrHisto, tpRatioHisto = eventLoop(minTPET, cNOPU, cOOT, outFile)    
+    tpRatioHisto = eventLoop(minTPET, cNOPU, cOOT, outFile)    
 
-    for ieta in xrange(1,29):
-        etCorrIetaSlicer(outFile, tpCorrHisto, ietaRange = [ieta])
-        etRatioIetaSlicer(outFile, tpRatioHisto, ietaRange = [ieta])
+    for ieta in xrange(1,29): etRatioIetaSlicer(outFile, tpRatioHisto, ietaRange = [ieta])
 
     print "Done writing to ==> \"%s\""%(outFilePath)
     outFile.Close()
