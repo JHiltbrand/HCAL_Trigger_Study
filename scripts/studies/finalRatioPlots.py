@@ -66,7 +66,7 @@ def draw1DHisto(theStack, histo, color, markerStyle):
     stddev = histo.GetStdDev()
 
     setAxisDims(histo, 0.042, 0.042, 0.042, 0.052, 0.052, 0.052, 1.06, 1.2, 1.0)
-    set1Doptions(histo, lineColor = color, markerStyle = markerStyle, markerSize = 0, normalize = True)
+    set1Doptions(histo, lineWidth = 5, lineColor = color, markerStyle = markerStyle, markerSize = 0, normalize = True)
 
     theStack.Add(histo)
     theStack.GetXaxis().SetTitle(histo.GetXaxis().GetTitle())
@@ -127,6 +127,7 @@ if __name__ == '__main__':
         schemeMap.setdefault("PFAX1", {}).setdefault("path", args.pfaX1)
         schemeMap["PFAX1"]["scheme"] = getPFAname(args.pfaX1)
         schemeMap["PFAX1"]["mcolor"] = colors[0]
+        schemeMap["PFAX1"]["msize"] = 2.7 
         schemeMap["PFAX1"]["bmcolor"] = ROOT.kBlack
         schemeMap["PFAX1"]["fcolor"] = ROOT.kRed
         schemeMap["PFAX1"]["rcolor"] = colors[0]
@@ -150,6 +151,7 @@ if __name__ == '__main__':
         schemeMap.setdefault("PFAX2", {}).setdefault("path", args.pfaX2)
         schemeMap["PFAX2"]["scheme"] = getPFAname(args.pfaX2)
         schemeMap["PFAX2"]["mcolor"] = colors[1]
+        schemeMap["PFAX2"]["msize"] = 2.7 
         schemeMap["PFAX2"]["bmcolor"] = ROOT.kBlack
         schemeMap["PFAX2"]["fcolor"] = ROOT.kGray+2
         schemeMap["PFAX2"]["rcolor"] = colors[1] 
@@ -242,6 +244,7 @@ if __name__ == '__main__':
         schemeMap.setdefault("PFAY", {}).setdefault("path", args.pfaY)
         schemeMap["PFAY"]["scheme"] = getPFAname(args.pfaY)
         schemeMap["PFAY"]["mcolor"] = ROOT.kBlack
+        schemeMap["PFAY"]["msize"] = 2.4 
         schemeMap["PFAY"]["fcolor"] = ROOT.kBlack
         schemeMap["PFAY"]["rcolor"] = ROOT.kGray+2
         schemeMap["PFAY"]["style"] = 24 
@@ -365,8 +368,8 @@ if __name__ == '__main__':
                 ratios.append(hPFA)
 
                 # Here we decide the style options if we have an uncertainty band or not
-                if withUncertaintyBand: set1Doptions(profile, lineWidth = 1, markerColor = options["bmcolor"], lineColor = options["bmcolor"], markerStyle = options["style"], markerSize = 2)
-                else:                   set1Doptions(profile, lineWidth = 0, markerColor = options["mcolor"], markerStyle = options["style"])
+                if withUncertaintyBand: set1Doptions(profile, markerColor = options["bmcolor"], lineColor = options["bmcolor"], markerSize = options["msize"])
+                else:                   set1Doptions(profile, markerColor = options["mcolor"],  lineColor = options["mcolor"], markerSize = options["msize"], markerStyle = options["style"])
 
                 profiles.append(profile)
 
@@ -470,14 +473,14 @@ if __name__ == '__main__':
 
                 drawOption = ""
                 if withUncertaintyBand: 
-                    set1Doptions(options[regime], lineWidth = 1, fillColor = options["fcolor"], lineColor = options["blcolor"], markerSize = 2, markerColor = options["bmcolor"])
-                    set1Doptions(options[regime+"Band"], lineWidth = 1, fillColor = options["fcolor"], lineColor = options["blcolor"], markerSize = 2, markerColor = options["bmcolor"])
+                    set1Doptions(options[regime], fillColor = options["fcolor"], lineColor = options["bmcolor"], markerSize = options["msize"], markerColor = options["bmcolor"])
+                    set1Doptions(options[regime+"Band"], fillColor = options["fcolor"], lineColor = options["blcolor"], markerSize = options["msize"], markerColor = options["bmcolor"])
                     graphs.append(options[regime])
                     bands.append(options[regime+"Band"])
                     
                 else:
-                    set1Doptions(options[regime], lineWidth = 3, lineColor = options["rcolor"], markerSize = 3, markerStyle = options["style"], markerColor = options["rcolor"])
-                    set1Doptions(options[regime+"Band"], lineWidth = 3, lineColor = options["rcolor"], markerSize = 3, markerStyle = options["style"], markerColor = options["rcolor"])
+                    set1Doptions(options[regime], lineColor = options["rcolor"], markerSize = options["msize"], markerStyle = options["style"], markerColor = options["rcolor"])
+                    set1Doptions(options[regime+"Band"], lineColor = options["rcolor"], markerSize = options["msize"], markerStyle = options["style"], markerColor = options["rcolor"])
                     graphs.append(options[regime])
                     bands.append(options[regime+"Band"])
 
