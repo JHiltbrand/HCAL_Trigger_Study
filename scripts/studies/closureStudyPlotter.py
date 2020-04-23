@@ -22,15 +22,15 @@ ROOT.TH2.SetDefaultSumw2()
 def eventLoop(minTPET, nopuChain, ootChain, outfile):
 
     outfile.cd()
-    h2 = ROOT.TH2F("tpET_ratio", ";i#eta;TP E_{T} Ratio", 57, -28.5, 28.5, 720, -0.014, 19.986)
-    h3 = ROOT.TH3F("tpET_corrl", ";TP E_{T} (t#bar{t} + 0PU);TP E_{T} (t#bar{t} + OOT PU);", 258, -0.25, 128.25, 258, -0.25, 128.25, 28, 0.5, 28.5)
+    h3_ratio = ROOT.TH3F("tpET_ratio", ";i#eta;TP E_{T} Ratio;", 257, -0.25, 128.25, 720, -0.014, 19.986, 28, 0.5, 28.5)
+    h3_corrl = ROOT.TH3F("tpET_corrl", ";TP E_{T} (t#bar{t} + 0PU);TP E_{T} (t#bar{t} + OOT PU);", 257, -0.25, 128.25, 257, -0.25, 128.25, 28, 0.5, 28.5)
 
-    ootChain.SetBranchStatus("*", 0);     nopuChain.SetBranchStatus("*", 0)
-    ootChain.SetBranchStatus("et", 1);    nopuChain.SetBranchStatus("et", 1)
-    ootChain.SetBranchStatus("ieta", 1);  nopuChain.SetBranchStatus("ieta", 1)
-    ootChain.SetBranchStatus("iphi", 1);  nopuChain.SetBranchStatus("iphi", 1)
-    ootChain.SetBranchStatus("event", 1); nopuChain.SetBranchStatus("event", 1)
-    ootChain.SetBranchStatus("depth", 1); nopuChain.SetBranchStatus("depth", 1)
+    ootChain.SetBranchStatus("*", 0);      nopuChain.SetBranchStatus("*", 0)
+    ootChain.SetBranchStatus("et", 1);     nopuChain.SetBranchStatus("et", 1)
+    ootChain.SetBranchStatus("ieta", 1);   nopuChain.SetBranchStatus("ieta", 1)
+    ootChain.SetBranchStatus("iphi", 1);   nopuChain.SetBranchStatus("iphi", 1)
+    ootChain.SetBranchStatus("event", 1);  nopuChain.SetBranchStatus("event", 1)
+    ootChain.SetBranchStatus("depth", 1);  nopuChain.SetBranchStatus("depth", 1)
 
     NEVENTS = ootChain.GetEntries()
 
@@ -38,7 +38,6 @@ def eventLoop(minTPET, nopuChain, ootChain, outfile):
 
         ootChain.GetEntry(iEvent)
         nopuChain.GetEntry(PU2NOPUMAP[ootChain.event])
-        #nopuChain.GetEntry(iEvent)
 
         if ootChain.event != nopuChain.event:
             print "EVENT MISMATCH, SKIPPING THIS EVENT ENTRY!"
@@ -97,17 +96,15 @@ def eventLoop(minTPET, nopuChain, ootChain, outfile):
                             
                             if jET > 0:
                                 etFrac = iET / jET
-                                h2.Fill(ieta, etFrac)
+                                h3_ratio.Fill(jET, etFrac, abs(ieta))
 
-                            h3.Fill(jET, iET, abs(ieta))
+                            h3_corrl.Fill(jET, iET, abs(ieta))
                             hotStart = jTP
                             break
 
         print "Processed event %d => %d..."%(iEvent,NEVENTS)
 
-    h2.Write()
-
-    return h3
+    return h3_corrl, h3_ratio
 
 # 2D histo of TP ET correlation for given range of ieta and range of TP ET
 def etCorrIetaSlicer(outfile, histo, ietaRange = []):
@@ -135,11 +132,39 @@ def etCorrIetaSlicer(outfile, histo, ietaRange = []):
 
     h2.Write("TP_ETCorr_%s"%(ietaStr))
 
+# 2D histo of TP ET correlation for given range of ieta and range of TP ET
+def etRatioIetaSlicer(outfile, histo, ietaRange = []):
+
+    outfile.cd()
+
+    htemp = histo.Clone()
+
+    h2 = 0; ietaStr = ""
+    if len(ietaRange) == 0:
+        htemp.GetZaxis().SetRange(1, htemp.GetZaxis().GetNbins())
+    elif len(ietaRange) == 1:
+        htemp.GetZaxis().SetRange(htemp.GetZaxis().FindBin(ietaRange[0]),htemp.GetZaxis().FindBin(ietaRange[0]))
+        ietaStr = "ieta%d"%(ietaRange[0])
+    elif len(ietaRange) == 2:
+        htemp.GetZaxis().SetRange(htemp.GetZaxis().FindBin(ietaRange[0]),htemp.GetZaxis().FindBin(ietaRange[1]))
+        ietaStr = "ieta%dto%d"%(ietaRange[0],ietaRange[1])
+
+    htemp.GetZaxis().SetBit(ROOT.TAxis.kAxisRange)
+    h2 = htemp.Project3D("yx")
+
+    h2.SetTitle("")
+    h2.GetXaxis().SetTitle("TP E_{T} [GeV] (t#bar{t}+0PU)")
+    h2.GetYaxis().SetTitle("E_{T,OOTPU} / E_{T,0PU}")
+
+    h2.Write("TP_ETRatio_%s"%(ietaStr))
+
 # The analysis method does the handling of the input file path and gets the list of files.
 # From there the TChains are created and passed to the eventLoop
 def analysis(NOPUFileDir, OOTFileDir, minTPET, tag):
 
-    HCALNTUPLES = "/eos/uscms/store/user/jhiltbra/HCAL_Trigger_Study/hcalNtuples/"
+    USER = os.getenv("USER")
+    HOME = os.getenv("HOME")
+    HCALNTUPLES = "/eos/uscms/store/user/%s/HCAL_Trigger_Study/hcalNtuples/"%(USER)
 
     onEOS = "store" in NOPUFileDir
 
@@ -155,7 +180,7 @@ def analysis(NOPUFileDir, OOTFileDir, minTPET, tag):
             puStub = sub
             break
 
-    outDir = "%s/nobackup/HCAL_Trigger_Study/input/Closure/%s/%s_NOPU_vs_%s_PU/TPETgt%0.1f"%(os.getenv("HOME"), tag, nopuStub, puStub, minTPET)
+    outDir = "%s/nobackup/HCAL_Trigger_Study/input/Closure/%s/%s_NOPU_vs_%s_PU/TPETgt%0.1f"%(HOME, tag, nopuStub, puStub, minTPET)
     if not os.path.exists(outDir): os.makedirs(outDir)
 
     outFilePath = outDir + "/closure.root"
@@ -188,14 +213,11 @@ def analysis(NOPUFileDir, OOTFileDir, minTPET, tag):
     
         cOOT.AddFile("root://cmseos.fnal.gov/"+item)
 
-    tpCorrHisto = eventLoop(minTPET, cNOPU, cOOT, outFile)    
+    tpCorrHisto, tpRatioHisto = eventLoop(minTPET, cNOPU, cOOT, outFile)    
 
     for ieta in xrange(1,29):
         etCorrIetaSlicer(outFile, tpCorrHisto, ietaRange = [ieta])
-
-    etCorrIetaSlicer(outFile, tpCorrHisto, ietaRange = [1,16])
-    etCorrIetaSlicer(outFile, tpCorrHisto, ietaRange = [17,20])
-    etCorrIetaSlicer(outFile, tpCorrHisto, ietaRange = [21,28])
+        etRatioIetaSlicer(outFile, tpRatioHisto, ietaRange = [ieta])
 
     print "Done writing to ==> \"%s\""%(outFilePath)
     outFile.Close()
