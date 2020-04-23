@@ -34,38 +34,82 @@ def remapProfile(profile):
 
 # From a profile type object, get the error on each bin
 # And use that to construct a new profile of the std devs
-def stdDevProfile(profile):
+def stdDevProfile(profile, skip = -1):
 
-    stddevProf = ROOT.TH1F(profile.GetName()+"_std", "", profile.GetNbinsX(), profile.GetXaxis().GetBinLowEdge(1), profile.GetXaxis().GetBinUpEdge(profile.GetNbinsX())); stddevProf.SetDirectory(0); ROOT.SetOwnership(stddevProf, False)
+    stddevProf = ROOT.TGraphErrors(profile);
+    ROOT.SetOwnership(stddevProf, False)
 
-    for xbin in xrange(1, profile.GetNbinsX()+1): stddevProf.SetBinContent(xbin, profile.GetBinError(xbin))
+    xerr = profile.GetBinWidth(1)
+    for xbin in xrange(1, profile.GetNbinsX()+1):
+        if xbin != skip:
+            stddevProf.SetPoint(xbin, profile.GetBinCenter(xbin), profile.GetBinError(xbin))
+            stddevProf.SetPointError(xbin, xerr/2.0, 0)
 
     return stddevProf
 
 # The makeBandGraph method takes three TH1s where histoUp and histoDown
 # would make an envelope around histoNominal. An optional color for the 
 # band is passable
-def makeBandGraph(histoUp, histoDown, histoNominal, color):
+def makeBandGraph(histoNominal, histoUp, histoDown, color, skip = -1):
     
-    npoints = histoUp.GetNbinsX()
+    graphBand = 0; npoints = 0
+    if "TH1" in histoUp.ClassName() or "TProf" in histoUp.ClassName(): npoints = histoUp.GetNbinsX()
+    elif "Error" in histoUp.ClassName():                               npoints = histoUp.GetN()
 
     graphBand = ROOT.TGraphAsymmErrors(npoints)
 
     for iPoint in xrange(0, npoints):
 
-        upErr = histoUp.GetBinContent(iPoint+1) - histoNominal.GetBinContent(iPoint+1)
-        downErr = histoNominal.GetBinContent(iPoint+1) - histoDown.GetBinContent(iPoint+1)
+        x = ROOT.Double(0); yUp = ROOT.Double(0); yNom = ROOT.Double(0); yDown = ROOT.Double(0)
+        xtemp = ROOT.Double(0); xtemp2 = ROOT.Double(0); ytemp = ROOT.Double(0)
 
-        if iPoint == 28:
-            graphBand.SetPoint(iPoint,      histoNominal.GetBinCenter(iPoint+1),       (histoNominal.GetBinContent(iPoint)+histoNominal.GetBinContent(iPoint+2))/2)
-            graphBand.SetPointError(iPoint, histoNominal.GetBinWidth(1)/2, histoNominal.GetBinWidth(1)/2, 0, 0)
+        # Depending on what object was passed, we get the relevant info differently
+        # If python hads and we could overload the function...
+        if "TH1" in histoUp.ClassName() or "TProf" in histoUp.ClassName():
 
-        graphBand.SetPoint(iPoint, histoNominal.GetBinCenter(iPoint+1), histoNominal.GetBinContent(iPoint+1))
-        graphBand.SetPointError(iPoint, histoNominal.GetBinWidth(1)/2, histoNominal.GetBinWidth(1)/2, downErr, upErr)
+            x = histoUp.GetBinCenter(iPoint+1); yUp = histoUp.GetBinContent(iPoint+1)
+            yNom = histoNominal.GetBinContent(iPoint+1); yDown = histoDown.GetBinContent(iPoint+1)
+            xwidth2 = histoNominal.GetBinWidth(1)/2.0
+
+        elif "Error" in histoUp.ClassName():
+
+            histoUp.GetPoint(iPoint, x, yUp); histoUp.GetPoint(2, xtemp, ytemp); histoUp.GetPoint(1, xtemp2, ytemp)
+            xwidth2 = (xtemp - xtemp2)/2.0
+            histoNominal.GetPoint(iPoint, x, yNom); histoDown.GetPoint(iPoint, x, yDown)
+
+        upErr = yUp - yNom
+        downErr = yNom - yDown
+        if downErr < 0. and upErr > 0. or downErr > 0. and upErr < 0.:
+            if abs(downErr) >= abs(upErr): upErr = 0.
+            else: downErr = 0.
+
+        if iPoint != skip:
+            graphBand.SetPoint(iPoint, x, yNom)
+            graphBand.SetPointError(iPoint, xwidth2, xwidth2, downErr, upErr)
 
     graphBand.SetFillColorAlpha(color, 1.0)
 
+    ROOT.SetOwnership(graphBand, False)
+        
     return graphBand
+
+# Using the nominal histogram and its up and down variation, create an error band
+def getUncertaintyBand(histo, histoUp, histoDown, fillColor):
+
+    gPFAXBand = 0
+    if histoUp != 0 and histoDown != 0:
+
+        pPFAX     = histo.ProfileX("p_%s_%d_ub"%(histo.GetName(),histo.GetUniqueID()), 1, -1, "");             pPFAX.Sumw2()
+        pPFAXUp   = histoUp.ProfileX("p_%s_%d_ub"%(histoUp.GetName(),histoUp.GetUniqueID()), 1, -1, "");       pPFAXUp.Sumw2()
+        pPFAXDown = histoDown.ProfileX("p_%s_%d_ub"%(histoDown.GetName(),histoDown.GetUniqueID()), 1, -1, ""); pPFAXDown.Sumw2()
+
+        gPFAXBand = makeBandGraph(pPFAXUp, pPFAXDown, pPFAX, fillColor)
+
+        set1Doptions(gPFAXBand, lineWidth = 3, lineColor = fillColor, markerColor = fillColor, markerSize = 0)
+           
+        if gPFAXBand: ROOT.SetOwnership(gPFAXBand, False)
+
+    return gPFAXBand
 
 def setAxisRebins(histo, xReb = 1, yReb = 1, zReb = 1):
 
@@ -100,7 +144,7 @@ def setAxisRanges(histo, xMin = -1, xMax = -1, yMin = -1, yMax = -1, zMin = -1, 
     if zMin != zMax: histo.GetZaxis().SetRangeUser(zMin, zMax)
 
 # A function to set some TH1 options
-def set1Doptions(histo, fillColor = -1, lineColor = ROOT.kBlack, markerColor = ROOT.kBlack, lineStyle = 1, markerStyle = 20, lineWidth = 5, markerSize = 3, normalize = False):
+def set1Doptions(histo, fillColor = -1, lineColor = ROOT.kBlack, markerColor = ROOT.kBlack, lineStyle = 1, markerStyle = 20, lineWidth = 2, markerSize = 2.7, normalize = False):
 
     histo.SetLineColor(lineColor)
     histo.SetLineStyle(lineStyle)
@@ -123,24 +167,6 @@ def set2Doptions(histo, contour = 255):
 
     histo.SetContour(255)
 
-# Using the nominal histogram and its up and down variation, create an error band
-def getUncertaintyBand(histo, histoUp, histoDown, fillColor):
-
-    gPFAXBand = 0
-    if histoUp != 0 and histoDown != 0:
-
-        pPFAX     = histo.ProfileX("p_%s_%d_ub"%(histo.GetName(),histo.GetUniqueID()), 1, -1, "");             pPFAX.Sumw2()
-        pPFAXUp   = histoUp.ProfileX("p_%s_%d_ub"%(histoUp.GetName(),histoUp.GetUniqueID()), 1, -1, "");       pPFAXUp.Sumw2()
-        pPFAXDown = histoDown.ProfileX("p_%s_%d_ub"%(histoDown.GetName(),histoDown.GetUniqueID()), 1, -1, ""); pPFAXDown.Sumw2()
-
-        gPFAXBand = makeBandGraph(pPFAXUp, pPFAXDown, pPFAX, fillColor)
-
-        set1Doptions(gPFAXBand, lineWidth = 3, lineColor = fillColor, markerColor = fillColor, markerSize = 0)
-           
-        if gPFAXBand: ROOT.SetOwnership(gPFAXBand, False)
-
-    return gPFAXBand
-
 # From the events TChain, do a TTree draw to make an ND histo
 # Variables, labels, and cut are specified by the user
 def makeNDhisto(evtsTree, variables, ranges, labels, cut):
@@ -148,7 +174,7 @@ def makeNDhisto(evtsTree, variables, ranges, labels, cut):
     h = 0; hName = "h_%s_%s"%(evtsTree.GetTitle(), randomString())
     if len(variables) == 3:
         h = ROOT.TH3F(hName, ";%s;%s;%s"%(labels[0], labels[1], labels[2]), ranges[0], ranges[1], ranges[2], ranges[3], ranges[4], ranges[5], ranges[6], ranges[7], ranges[8])
-        evtsTree.Draw("%s:%s:%s>>%s"%(variables[2],variables[1],variables[0],hName), cut)
+        evtsTree.Draw("%s:%s:%s>>%s"%(variables[2],variables[1],variables[0],hName), cut, "", ROOT.TTree.kMaxEntries, 0)
         h = ROOT.gDirectory.Get(hName)
     elif len(variables) == 2:
         h = ROOT.TH2F(hName, ";%s;%s"%(labels[0], labels[1]), ranges[0], ranges[1], ranges[2], ranges[3], ranges[4], ranges[5])
