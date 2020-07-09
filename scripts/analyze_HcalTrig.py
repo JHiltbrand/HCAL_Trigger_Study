@@ -40,36 +40,37 @@ process.load("SimCalorimetry.HcalTrigPrimProducers.hcaltpdigi_cff")
 process.load("RecoLocalCalo.Configuration.hcalLocalReco_cff")
 
 # Set the global tag if we are running on MC or data 
-process.GlobalTag = GlobalTag(process.GlobalTag, '106X_mcRun3_2021_realistic_v3', '')
+process.GlobalTag = GlobalTag(process.GlobalTag, '110X_mcRun3_2021_realistic_v6', '')
 
 print "Using PeakFinderAlgorithm %s"%(PFA)
 if "PFA2p" in PFA:
     print "Only using 3 samples"
-    process.simHcalTriggerPrimitiveDigis.numberOfSamplesQIE11 = 3
-    process.simHcalTriggerPrimitiveDigis.numberOfPresamplesQIE11 = 1
-    process.HcalTPGCoderULUT.contain1TS = False
-    process.HcalTPGCoderULUT.containPhaseNS = 3.0
+    process.simHcalTriggerPrimitiveDigis.numberOfPresamplesHBQIE11 = 1
+    process.simHcalTriggerPrimitiveDigis.numberOfPresamplesHEQIE11 = 1
 
-if "PFA2" in PFA:
+elif "PFA2" in PFA:
     print "Only using 2 samples"
-    process.simHcalTriggerPrimitiveDigis.numberOfSamplesQIE11 = 2
-    process.simHcalTriggerPrimitiveDigis.numberOfPresamplesQIE11 = 0
-    process.HcalTPGCoderULUT.contain1TS = False
-    process.HcalTPGCoderULUT.containPhaseNS = 3.0
 
 elif "PFA1p" in PFA:
     print "Only using 2 sample"
-    process.simHcalTriggerPrimitiveDigis.numberOfSamplesQIE11 = 2
-    process.simHcalTriggerPrimitiveDigis.numberOfPresamplesQIE11 = 1
-    process.HcalTPGCoderULUT.contain1TS = True
-    process.HcalTPGCoderULUT.containPhaseNS = 3.0
+    process.simHcalTriggerPrimitiveDigis.numberOfPresamplesHBQIE11 = 1
+    process.simHcalTriggerPrimitiveDigis.numberOfPresamplesHEQIE11 = 1
+    process.HcalTPGCoderULUT.contain1TSHB = True
+    process.HcalTPGCoderULUT.containPhaseNSHB = 3.0
+    process.HcalTPGCoderULUT.contain1TSHE = True
+    process.HcalTPGCoderULUT.containPhaseNSHE = 3.0
 
 elif "PFA1" in PFA:
     print "Only using 1 sample"
-    process.simHcalTriggerPrimitiveDigis.numberOfSamplesQIE11 = 1
-    process.simHcalTriggerPrimitiveDigis.numberOfPresamplesQIE11 = 0
-    process.HcalTPGCoderULUT.contain1TS = True
-    process.HcalTPGCoderULUT.containPhaseNS = 3.0
+    process.HcalTPGCoderULUT.contain1TSHB = True
+    process.HcalTPGCoderULUT.containPhaseNSHB = 3.0
+    process.HcalTPGCoderULUT.contain1TSHE = True
+    process.HcalTPGCoderULUT.containPhaseNSHE = 3.0
+elif "PFAX" in PFA:
+    print "Using mixed samples"
+    process.simHcalTriggerPrimitiveDigis.numberOfPresamplesHEQIE11 = 1
+    process.HcalTPGCoderULUT.contain1TSHE = True
+    process.HcalTPGCoderULUT.containPhaseNSHE = 3.0
 
 if PFA in pfaWeightsMap:
     print "Using weights: "
@@ -84,7 +85,7 @@ process.maxEvents = cms.untracked.PSet(
 
 # Input source, here a few different pre-defined sets of files
 if "DATA" in inputFile:
-    process.GlobalTag = GlobalTag(process.GlobalTag, '106X_dataRun2_v26', '')
+    process.GlobalTag = GlobalTag(process.GlobalTag, '110X_dataRun2_v12', '')
     process.source = cms.Source("PoolSource",
         fileNames = cms.untracked.vstring(
             'root://cmseos.fnal.gov///store/user/jhiltbra/HCAL_Trigger_Study/data/Run2018D/JetHT/RAW/v1/000/324/021/00000/DC207766-1C12-DC44-B679-89EB77C5EE2A.root', # LS 44 of Run 324021        
