@@ -90,10 +90,12 @@ def lumiAnalysis(run):
 
     for aFile in files:
 
+        if fileOnlyOnTape(aFile): continue
+
         lumis = lumis4File(aFile)
 
         for lumi in lumis:
-            if lumi < 100:
+            if lumi >= 501 and lumi <= 819:
                 print "File '%s' contains lumis "%(aFile)
                 print lumis
                 break
