@@ -177,8 +177,9 @@ if __name__ == '__main__':
         schemeMap["PFAX3"]["mcolor"] = colors[1]
         schemeMap["PFAX3"]["bmcolor"] = ROOT.kMagenta+1
         schemeMap["PFAX3"]["fcolor"] = ROOT.kMagenta+1
-        schemeMap["PFAX3"]["rcolor"] = ROOT.kGray+1
-        schemeMap["PFAX3"]["style"] = 4 
+        schemeMap["PFAX3"]["rcolor"] = colors[1] 
+        schemeMap["PFAX3"]["msize"] = 2.4
+        schemeMap["PFAX3"]["style"] = 24 
         schemeMap["PFAX3"]["resLow"] = ROOT.TGraphAsymmErrors(57) 
         schemeMap["PFAX3"]["resHigh"] = ROOT.TGraphAsymmErrors(57)
         schemeMap["PFAX3"]["resLowBand"] = ROOT.TGraphAsymmErrors(57) 
@@ -201,7 +202,8 @@ if __name__ == '__main__':
         schemeMap["PFAX4"]["bmcolor"] = ROOT.kMagenta+1
         schemeMap["PFAX4"]["fcolor"] = ROOT.kMagenta+1
         schemeMap["PFAX4"]["rcolor"] = ROOT.kGray+1
-        schemeMap["PFAX4"]["style"] = 4 
+        schemeMap["PFAX4"]["msize"] = 2.4
+        schemeMap["PFAX4"]["style"] = 26 
         schemeMap["PFAX4"]["resLow"] = ROOT.TGraphAsymmErrors(57) 
         schemeMap["PFAX4"]["resHigh"] = ROOT.TGraphAsymmErrors(57)
         schemeMap["PFAX4"]["resLowBand"] = ROOT.TGraphAsymmErrors(57) 
@@ -220,11 +222,11 @@ if __name__ == '__main__':
         stub = args.pfaX5.split("Ratios/")[-1]
         schemeMap.setdefault("PFAX5", {}).setdefault("path", args.pfaX5)
         schemeMap["PFAX5"]["scheme"] = getPFAname(args.pfaX5)
-        schemeMap["PFAX5"]["mcolor"] = colors[4] 
+        schemeMap["PFAX5"]["mcolor"] = colors[1] 
         schemeMap["PFAX5"]["bmcolor"] = ROOT.kMagenta+1
         schemeMap["PFAX5"]["fcolor"] = ROOT.kMagenta+1
         schemeMap["PFAX5"]["rcolor"] = ROOT.kGray+1
-        schemeMap["PFAX5"]["style"] = 20
+        schemeMap["PFAX5"]["style"] = 22
         schemeMap["PFAX5"]["resLow"] = ROOT.TGraphAsymmErrors(57) 
         schemeMap["PFAX5"]["resHigh"] = ROOT.TGraphAsymmErrors(57)
         schemeMap["PFAX5"]["resLowBand"] = ROOT.TGraphAsymmErrors(57) 
