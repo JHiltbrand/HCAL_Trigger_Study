@@ -1,115 +1,77 @@
-import sys, os, subprocess
+import argparse
 from multiprocessing import Pool
+from dasgoHelpers import *
 
-ONTAPE = ["MSS", "Export", "Buffer"]
-
-def blocks4Run(run, dataset):
-
-    proc = subprocess.Popen(['dasgoclient', '--query=block dataset=%s run=%s'%(dataset,run)], stdout=subprocess.PIPE)
-    blocks = proc.stdout.readlines()
-    blocks = [block.rstrip() for block in blocks]
-    return blocks
-
-def files4Block(block):
-
-    proc = subprocess.Popen(['dasgoclient', '--query=file block=%s'%(block)], stdout=subprocess.PIPE)
-    files = proc.stdout.readlines()
-    files = [afile.rstrip() for afile in files]
-    return files
-
-def files4Run(dataset,run):
-
-    proc = subprocess.Popen(['dasgoclient', '--query=file dataset=%s run=%s'%(dataset,run)], stdout=subprocess.PIPE)
-    files = proc.stdout.readlines()
-    files = [afile.rstrip() for afile in files]
-    return files
-
-def lumis4File(afile):
-
-    lumiList = []
-    proc = subprocess.Popen(['dasgoclient', '--query=lumi file=%s'%(afile)], stdout=subprocess.PIPE)
-    lumis = proc.stdout.readlines()
-    for lumi in lumis:
-        lumiList += lumi.rstrip().strip('[').strip(']').split(',')
-    lumiList = [int(lumi) for lumi in lumiList]
-    return lumiList
-
-def blockOnlyOnTape(block):
-
-    proc = subprocess.Popen(['dasgoclient', '--query=site block=%s'%(block)], stdout=subprocess.PIPE)
-    sites = proc.stdout.readlines()
-    sites = [site.rstrip() for site in sites]
-
-    onTape = True 
-    for site in sites:
-        siteIsTape = False
-        for keyword in ONTAPE:
-            siteIsTape |= (keyword in site)
-        onTape &= siteIsTape
-
-    return onTape 
-
-def fileOnlyOnTape(aFile):
-
-    proc = subprocess.Popen(['dasgoclient', '--query=site file=%s'%(aFile)], stdout=subprocess.PIPE)
-    sites = proc.stdout.readlines()
-    sites = [site.rstrip() for site in sites]
-  
-    onTape = True 
-    for site in sites:
-        siteIsTape = False
-        for keyword in ONTAPE:
-            siteIsTape |= (keyword in site)
-        onTape &= siteIsTape
-
-    return onTape 
-
+# Function that gets called in parallel from main
+# when searching multiple runs to see which are on
+# tape
 def analysis(run):
 
+    # First get the blocks for the run
     blocks = blocks4Run(run, dataset)
 
+    # If any block is only on tape, then run is useless...
     for block in blocks:
 
         if blockOnlyOnTape(block):
             print "Run %s is partially on tape..."%(run)
             return 
             
+    # Although a block may not be _only_ on tape,
+    # some of its files may be, so check each one
     files = files4Run(dataset, run)
 
+    # If a single file is only on tape, then consider
+    # the run useless...
     for aFile in files:
 
-        if fileOnlyOnTape(aFile):
-            return 
+        if fileOnlyOnTape(aFile): return 
 
-    print "\n\n"
-    print "Run \"%s\" is entirely on disk!\n\n"%(run)
+    print "Run \"%s\" is entirely on disk!"%(run)
 
+# A function to print each file for a run
+# along with the lumis contained in the file
 def lumiAnalysis(run):
 
     files = files4Run(dataset, run)
 
     for aFile in files:
 
+        # Always skip tape-only stuff...
         if fileOnlyOnTape(aFile): continue
 
         lumis = lumis4File(aFile)
 
         for lumi in lumis:
-            if lumi >= 501 and lumi <= 819:
-                print "File '%s' contains lumis "%(aFile)
-                print lumis
-                break
+            print "File '%s' contains lumis "%(aFile)
+            print lumis
+            break
 
 if __name__ == "__main__":
 
-    dataset = str(sys.argv[1])
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--run"          , dest="run"          , help="Which run to analyze"     , type=str, default="1")
+    parser.add_argument("--dataset"      , dest="dataset"      , help="Which dataset to analyze" , type=str, default="NULL")
+    parser.add_argument("--findRunOnDisk", dest="findRunOnDisk", help="Mode for finding runs"    , default=False, action="store_true")
+    args = parser.parse_args()
 
-    lumiAnalysis(324021)
+    run           = args.run
+    dataset       = args.dataset
+    findRunOnDisk = args.findRunOnDisk
 
-    #proc = subprocess.Popen(['dasgoclient', '--query=run dataset=%s'%(dataset)], stdout=subprocess.PIPE)
-    #runs = proc.stdout.readlines()
-    #runs = [run.rstrip() for run in runs]
+    if dataset == "NULL":
+        print "No dataset has been provided! Exiting..."
+        quit()
 
-    #p = Pool(24) 
+    if findRunOnDisk:
 
-    #p.map(analysis, runs)
+        proc = subprocess.Popen(['dasgoclient', '--query=run dataset=%s'%(dataset)], stdout=subprocess.PIPE)
+        runs = proc.stdout.readlines()
+        runs = [run.rstrip() for run in runs]
+
+        p = Pool(24) 
+
+        p.map(analysis, runs)
+
+    else:
+        lumiAnalysis(run)
