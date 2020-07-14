@@ -2,6 +2,10 @@ import argparse
 from multiprocessing import Pool
 from dasgoHelpers import *
 
+# Example call of this function:
+
+# python findRunOnDisk.py --run 324021 --dataset /SingleMuon/Run2018D-ZMu-PromptReco-v2/RAW-RECO
+
 # Function that gets called in parallel from main
 # when searching multiple runs to see which are on
 # tape
