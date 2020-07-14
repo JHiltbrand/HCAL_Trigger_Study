@@ -107,7 +107,7 @@ scram b -j8
 
 For making ntuples to be used for weights extraction it is important to turn off pulse containment correction in `CalibCalorimetry/HcalTPGAlgos/src/HcaluLUTTPGCoder.cc` by commenting out the line:
 
-```containmentCorrection2TSCorrected = pulseCorr_->correction(cell, 2, correctionPhaseNS, correctedCharge);```
+```containmentCorrection = containmentCorrection2TSCorrected;```
 
 then recompile again.
 
