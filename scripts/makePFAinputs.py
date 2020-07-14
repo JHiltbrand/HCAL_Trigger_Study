@@ -2,10 +2,17 @@
 
 import argparse
 
+# An example call would be:
+
+# python makePFAinputs.py --inputFile pfa_output.txt
+
+# The output text file would be read into ISE
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--inputFile", dest="inputFile", help="Path to input file", type=str, required=True)
 args = parser.parse_args()
 
+# Input text file from CMSSW printout...
 pfa1pf  = open("pfa1p_input.txt", "w")
 
 lin_sum_energy_text = "lin_sum_energy="
@@ -42,11 +49,7 @@ with open(args.inputFile, "r") as f:
         tp_calc_exp    = int(linesplit[3])
         tp_calc_peak   = int(linesplit[4])
 
-        #pfa1pf.write(lin_sum_energy_text + str(lin_sum_energy) + "; tp_calc_exp=" + str(tp_calc_exp) + "; " + valid + "\n")
         pfa1pf.write(task + "(%s, %s, %s);\n"%(str(lin_sum_energy), str(weight), str(tp_calc_exp)))
-        #pfa1pf.write(wait_6 + "\n")
-        #pfa1pf.write(not_valid + "\n")
-        #pfa1pf.write(wait_30 + "\n")
 
         count += 1
         line = f.readline()
