@@ -104,13 +104,13 @@ For making ntuples to be used for weights extraction it is important to turn off
 
 then recompile again.
 
-Once these steps are completed one can process the GEN-SIM-DIGI-RAW files and make ntuples for extracting pulse filter weights. An example of doing this would be:
+Once these steps are completed one can process the RAW files and make ntuples for extracting pulse filter weights. An example of doing this would be:
 
 ```
 cd $HOME/nobackup/HCAL_Trigger_Study/scripts
 
-cmsRun analyze_HcalTrig.py PFA2 TTbar_OOT 27
-cmsRun analyze_HcalTrig.py PFA2 NOPU 28
+cmsRun analyze_HcalTrig.py 27 PFA2 TTbar_OOT
+cmsRun analyze_HcalTrig.py 28 PFA2 NOPU
 ```
 
 Here `PFA2` is used more or less as a placeholder and is a meaningless option for this step. The `TTbar_OOT` and `NOPU` will be parsed by the script and be used to determine which GEN-SIM-DIGI-RAW files will be run on. In this example, the ttbar files with OOT PU mixed in and no PU mixed in will be run over. Lastly, the `27`, `28` will be used in the output root file name `hcalNtuples_27.root`.
