@@ -1,6 +1,6 @@
 # HCAL Pulse Filter Study
 
-This is a repository of scripts for extracting pulse filter weights, applying them and making plots of end results. Several steps are outlined below to go from generating special PU-mixed files to extracting weights to applying the weights.
+This is a repository of scripts for extracting pulse filter weights, applying the weights and reconstructing trigger primitives, and making plots of end results. Several steps are outlined below to go from generating special PU-mixed files to extracting weights to applying the weights.
 
 DISCLAIMER: Any file paths implicitly assumed are customized for the author and will not work out-of-the-box.
 
@@ -49,13 +49,12 @@ With these GEN-SIM input files we can use `cmsDriver.py` to make a `cmsRun` conf
 
 ```
 cmsDriver.py
-  --conditions auto:phase1_2019_realistic \
   --pileup_input das:/RelValMinBias_13/CMSSW_10_6_0_pre4-106X_upgrade2021_realistic_v4-v1/GEN-SIM \
   --filein das:/PUT/DAS/PATH/HERE \
   --era Run3 \
-  --eventcontent FEVTDEBUGHLT \
-  -s DIGI:pdigi_valid,L1,DIGI2RAW,HLT:@relval2017 \
-  --datatier GEN-SIM-DIGI-RAW \
+  --eventcontent RAW \
+  -s DIGI:pdigi_valid,L1,DIGI2RAW \
+  --datatier RAW \
   --pileup AVE_50_BX_25ns \
   --geometry DB:Extended \
   --conditions 106X_upgrade2021_realistic_v4 \
