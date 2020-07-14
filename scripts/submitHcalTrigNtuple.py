@@ -3,6 +3,10 @@
 # This is a pretty vanilla condor submission script for submitting jobs to run on DIGI-RAW files
 # and produce HCAL ntuples
 
+# An example call to this script would be:
+
+# python submitHcalTrigNtuple.py --schemes PFA2 PFA1 --dataset /RelValNuGun/CMSSW_10_6_1_patch1-PU_106X_mcRun3_2021_realistic_v3_rsb-v2/GEN-SIM-DIGI-RAW --tag NuGun --filesPerJob 1
+
 import os, sys, argparse, subprocess, shutil
 from time import strftime
 
