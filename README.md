@@ -1,6 +1,6 @@
 # HCAL Pulse Filter Study
 
-This is a repository of scripts for extracting pulse filter weights, applying them and making plots of end results. Several steps are outlined below to go from generating special PU-mixed files to extracting weights to applying the weights.
+This is a repository of scripts for extracting pulse filter weights, applying the weights and reconstructing trigger primitives, and making plots of end results. Several steps are outlined below to go from generating special PU-mixed files to extracting weights to applying the weights.
 
 DISCLAIMER: Any file paths implicitly assumed are customized for the author and will not work out-of-the-box.
 
@@ -24,6 +24,10 @@ Before we can proceed, we need to initialize a `CMSSW` area and compile:
 
 ```
 cd $HOME/nobackup/HCAL_Trigger_Study/cmssw
+
+mkdir puMixing
+cd puMixing
+
 cmsrel CMSSW_10_6_1_patch1
 cd CMSSW_10_6_1_patch1/src
 cmsenv
@@ -35,7 +39,7 @@ git cms-addpkg Mixing/Base
 scram b -j8
 ```
 
-The first step is to take a ttbar and/or nugun GEN-SIM file and produce two daughter GEN-SIM-DIGI-RAW files for exactly two different pileup scenarios. One daughter file will have no pileup mixed in while the other file will have pileup mixed in for whichever special pileup scenario is being studied.
+The first step is to take a ttbar and/or nugun GEN-SIM file and produce two daughter RAW files for exactly two different pileup scenarios. One daughter file will have no pileup mixed in while the other file will have pileup mixed in for whichever special pileup scenario is being studied.
 
 Possible centrally-produced GEN-SIM files to be used could be:
 
@@ -49,13 +53,12 @@ With these GEN-SIM input files we can use `cmsDriver.py` to make a `cmsRun` conf
 
 ```
 cmsDriver.py
-  --conditions auto:phase1_2019_realistic \
   --pileup_input das:/RelValMinBias_13/CMSSW_10_6_0_pre4-106X_upgrade2021_realistic_v4-v1/GEN-SIM \
   --filein das:/PUT/DAS/PATH/HERE \
   --era Run3 \
-  --eventcontent FEVTDEBUGHLT \
-  -s DIGI:pdigi_valid,L1,DIGI2RAW,HLT:@relval2017 \
-  --datatier GEN-SIM-DIGI-RAW \
+  --eventcontent RAW \
+  -s DIGI:pdigi_valid,L1,DIGI2RAW \
+  --datatier RAW \
   --pileup AVE_50_BX_25ns \
   --geometry DB:Extended \
   --conditions 106X_upgrade2021_realistic_v4 \
@@ -75,43 +78,46 @@ process.mix.minBunch = cms.int32(-10)
 process.mix.maxBunch = cms.int32(4)
 ```
 
-An equivalent `cmsRun` configuration file can be made for the case of no pileup and can be done by excluding the `--pileup_input` and `--pileup` flags and changing the name passed as `--fileout` when calling `cmsDriver.py`. After running `cmsRun ootpu_cfg.py` and waiting for many hours one will have a GEN-SIM-DIGI-RAW root file with pileup mixed in.
+An equivalent `cmsRun` configuration file can be made for the case of no pileup and can be done by excluding the `--pileup_input` and `--pileup` flags and changing the name passed as `--fileout` when calling `cmsDriver.py`. After running `cmsRun ootpu_cfg.py` and waiting for many hours one will have a RAW root file with pileup mixed in.
 
 ## Step 2: Making HCAL Ntuples
 
-Once the GEN-SIM-DIGI-RAW files for the no pileup and out-of-time pileup scenarios have been produced, they are processed with the `cms-hcal-trigger` framework to produce manageable and simple-to-use ROOT TTrees (ntuples) with quantities that are relevant to extracting weights and studying trigger primitives.
+Once the RAW files for the no pileup and out-of-time pileup scenarios have been produced, they are processed with the `cms-hcal-trigger` framework to produce manageable and simple-to-use ROOT TTrees (ntuples) with quantities that are relevant to extracting weights and studying trigger primitives.
 
 To start, we setup a second CMSSW release (assuming working on LPC) and pull in some customized code:
 
 ```
 cd $HOME/nobackup/HCAL_Trigger_Study/cmssw
 
-cmsrel CMSSW_10_6_0_pre4
-cd CMSSW_10_6_0_pre4/src
+mkdir puSub
+cd puSub
+
+cmsrel CMSSW_11_0_2
+cd CMSSW_11_0_2/src
 cmsenv
 
 scram b -j8
 
-git cms-merge-topic --unsafe JHiltbrand:JCH_OOTPU_dev
+git cms-merge-topic --unsafe JHiltbrand:110X_hcalPUSub_dev
 git clone git@github.com:JHiltbrand/cms-hcal-debug.git Debug/HcalDebug
-git checkout -b JCH_OOTPU_dev --track origin/JCH_OOTPU_dev
+git checkout -b 110X_hcalPUSub_dev --track origin/110X_hcalPUSub_dev
 
 scram b -j8
 ```
 
 For making ntuples to be used for weights extraction it is important to turn off pulse containment correction in `CalibCalorimetry/HcalTPGAlgos/src/HcaluLUTTPGCoder.cc` by commenting out the line:
 
-```containmentCorrection2TSCorrected = pulseCorr_->correction(cell, 2, correctionPhaseNS, correctedCharge);```
+```containmentCorrection = containmentCorrection2TSCorrected;```
 
 then recompile again.
 
-Once these steps are completed one can process the GEN-SIM-DIGI-RAW files and make ntuples for extracting pulse filter weights. An example of doing this would be:
+Once these steps are completed one can process the RAW files and make ntuples for extracting pulse filter weights. An example of doing this would be:
 
 ```
 cd $HOME/nobackup/HCAL_Trigger_Study/scripts
 
-cmsRun analyze_HcalTrig.py PFA2 TTbar_OOT 27
-cmsRun analyze_HcalTrig.py PFA2 NOPU 28
+cmsRun analyze_HcalTrig.py 27 PFA2 TTbar_OOT
+cmsRun analyze_HcalTrig.py 28 PFA2 NOPU
 ```
 
 Here `PFA2` is used more or less as a placeholder and is a meaningless option for this step. The `TTbar_OOT` and `NOPU` will be parsed by the script and be used to determine which GEN-SIM-DIGI-RAW files will be run on. In this example, the ttbar files with OOT PU mixed in and no PU mixed in will be run over. Lastly, the `27`, `28` will be used in the output root file name `hcalNtuples_27.root`.
