@@ -35,7 +35,7 @@ git cms-addpkg Mixing/Base
 scram b -j8
 ```
 
-The first step is to take a ttbar and/or nugun GEN-SIM file and produce two daughter GEN-SIM-DIGI-RAW files for exactly two different pileup scenarios. One daughter file will have no pileup mixed in while the other file will have pileup mixed in for whichever special pileup scenario is being studied.
+The first step is to take a ttbar and/or nugun GEN-SIM file and produce two daughter RAW files for exactly two different pileup scenarios. One daughter file will have no pileup mixed in while the other file will have pileup mixed in for whichever special pileup scenario is being studied.
 
 Possible centrally-produced GEN-SIM files to be used could be:
 
@@ -74,11 +74,11 @@ process.mix.minBunch = cms.int32(-10)
 process.mix.maxBunch = cms.int32(4)
 ```
 
-An equivalent `cmsRun` configuration file can be made for the case of no pileup and can be done by excluding the `--pileup_input` and `--pileup` flags and changing the name passed as `--fileout` when calling `cmsDriver.py`. After running `cmsRun ootpu_cfg.py` and waiting for many hours one will have a GEN-SIM-DIGI-RAW root file with pileup mixed in.
+An equivalent `cmsRun` configuration file can be made for the case of no pileup and can be done by excluding the `--pileup_input` and `--pileup` flags and changing the name passed as `--fileout` when calling `cmsDriver.py`. After running `cmsRun ootpu_cfg.py` and waiting for many hours one will have a RAW root file with pileup mixed in.
 
 ## Step 2: Making HCAL Ntuples
 
-Once the GEN-SIM-DIGI-RAW files for the no pileup and out-of-time pileup scenarios have been produced, they are processed with the `cms-hcal-trigger` framework to produce manageable and simple-to-use ROOT TTrees (ntuples) with quantities that are relevant to extracting weights and studying trigger primitives.
+Once the RAW files for the no pileup and out-of-time pileup scenarios have been produced, they are processed with the `cms-hcal-trigger` framework to produce manageable and simple-to-use ROOT TTrees (ntuples) with quantities that are relevant to extracting weights and studying trigger primitives.
 
 To start, we setup a second CMSSW release (assuming working on LPC) and pull in some customized code:
 
