@@ -24,6 +24,10 @@ Before we can proceed, we need to initialize a `CMSSW` area and compile:
 
 ```
 cd $HOME/nobackup/HCAL_Trigger_Study/cmssw
+
+mkdir puMixing
+cd puMixing
+
 cmsrel CMSSW_10_6_1_patch1
 cd CMSSW_10_6_1_patch1/src
 cmsenv
@@ -85,15 +89,18 @@ To start, we setup a second CMSSW release (assuming working on LPC) and pull in 
 ```
 cd $HOME/nobackup/HCAL_Trigger_Study/cmssw
 
-cmsrel CMSSW_10_6_0_pre4
-cd CMSSW_10_6_0_pre4/src
+mkdir puSub
+cd puSub
+
+cmsrel CMSSW_11_0_2
+cd CMSSW_11_0_2/src
 cmsenv
 
 scram b -j8
 
-git cms-merge-topic --unsafe JHiltbrand:JCH_OOTPU_dev
+git cms-merge-topic --unsafe JHiltbrand:110X_hcalPUSub_dev
 git clone git@github.com:JHiltbrand/cms-hcal-debug.git Debug/HcalDebug
-git checkout -b JCH_OOTPU_dev --track origin/JCH_OOTPU_dev
+git checkout -b 110X_hcalPUSub_dev --track origin/110X_hcalPUSub_dev
 
 scram b -j8
 ```
