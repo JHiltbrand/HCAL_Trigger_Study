@@ -191,7 +191,7 @@ root://cmseos.fnal.gov///store/user/${USERNAME}/TTbar_14TeV_TuneCP5_Pythia8/Hcal
 
 ### Making an Event Map
 
-When we produce the ntuple files using the no pileup and out-of-time pileup DIGI-RAW files, although all the same events are present in each, the events are not necessarily in the same order. To help speedup looping over the events tree while extracting weights, one needs to generate an event map that maps an event record in the OOT PU file to the same event record in the NOPU file. This is done by running `makeEventMap.py`. A call such as:
+When we produce ntuple files using no pileup and out-of-time pileup DIGI-RAW files (for weights extraction), although all the same events are present in each, the events are not necessarily in the same order. To help speedup looping over the events tree while extracting weights, one needs to generate an event map that maps an event record in the OOT PU file to the same event record in the NOPU file. This is done by running `makeEventMap.py`. A call such as:
 
 ```
 python makeEventMap.py --oot
@@ -199,14 +199,13 @@ python makeEventMap.py --oot
 
 will generate a python file `eventMap_NoContain_NoDepth_OOT.py` with a python dictionary called `PU2NOPUMAP`. Copy this dictionary into the `pu2nopuMap.py` script.
 
-
-
 ## Step 3: Extracting Pulse Filter Weights
 
 Weight extraction is done by the `weightExtraction.py` script in the `extraction` subfolder. The script is run in two successive executions. The first execution is intended for looping over the events in the HCAL ntuple files and extracts raw weights and writes raw histograms to a cache file. Then the script is run again to process the cache for making final plots and text files. This allows trivial plotting changes to be done quickly without having to loop over all the events again. Several commandline options can be specified and are documented below:
 
 ```
 --tag       = A unique tag to keep the output organized in its own folder.
+--data      = Are we running on data?
 --fromCache = Read back in cache file for making final plots and txt files (second step).
 --contain   = When extracting weights, read input files from within a "Contain" subfolder ("NoContain" default)
 --depth     = When extracting weights, read input files from within a "WithDepth" subfolder ("NoDepth" default)
