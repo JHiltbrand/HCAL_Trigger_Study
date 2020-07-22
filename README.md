@@ -105,11 +105,11 @@ git checkout -b 110X_hcalPUSub_dev --track origin/110X_hcalPUSub_dev
 scram b -j8
 ```
 
-For making ntuples to be used for weights extraction it is important to turn off pulse containment correction in `CalibCalorimetry/HcalTPGAlgos/src/HcaluLUTTPGCoder.cc` by commenting out the line:
+**For making ntuples to be used for weights extraction it is important to turn off pulse containment correction in `CalibCalorimetry/HcalTPGAlgos/src/HcaluLUTTPGCoder.cc` by commenting out the line:**
 
-```containmentCorrection = containmentCorrection2TSCorrected;```
+**```containmentCorrection = containmentCorrection2TSCorrected;```**
 
-then recompile again.
+**then recompile again.**
 
 Once these steps are completed one can process the RAW files and make ntuples for extracting pulse filter weights. An example of doing this would be:
 
