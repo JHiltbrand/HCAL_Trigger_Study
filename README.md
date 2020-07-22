@@ -44,10 +44,10 @@ The first step is to take a ttbar and/or nugun GEN-SIM file and produce two daug
 Possible centrally-produced GEN-SIM files to be used could be:
 
 **ttbar:**
-https://cmsweb.cern.ch/das/request?input=dataset%3D%2FRelValTTbar_13%2FCMSSW_10_6_0_pre4-106X_upgrade2021_realistic_v4-v1%2FGEN-SIM&instance=prod/global
+[/RelValTTbar_13/CMSSW_10_6_0_pre4-106X_upgrade2021_realistic_v4-v1/GEN-SIM](https://cmsweb.cern.ch/das/request?input=dataset%3D%2FRelValTTbar_13%2FCMSSW_10_6_0_pre4-106X_upgrade2021_realistic_v4-v1%2FGEN-SIM&instance=prod/global)
 
 **nugun:**
-https://cmsweb.cern.ch/das/request?view=list&limit=50&instance=prod%2Fglobal&input=dataset%3D%2FRelValNuGun%2FCMSSW_10_6_1_patch1-106X_mcRun3_2021_realistic_v3_rsb-v1%2FGEN-SIM
+[/RelValNuGun/CMSSW_10_6_1_patch1-106X_mcRun3_2021_realistic_v3_rsb-v1/GEN-SIM](https://cmsweb.cern.ch/das/request?view=list&limit=50&instance=prod%2Fglobal&input=dataset%3D%2FRelValNuGun%2FCMSSW_10_6_1_patch1-106X_mcRun3_2021_realistic_v3_rsb-v1%2FGEN-SIM)
 
 With these GEN-SIM input files we can use `cmsDriver.py` to make a `cmsRun` configuration file for completing the GEN-SIM-DIGI-RAW step. In the case of mixing in pileup one can call `cmsDriver.py` a la:
 

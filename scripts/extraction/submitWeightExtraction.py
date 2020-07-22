@@ -3,6 +3,10 @@
 # This is a condor submission script for submitting weight extraction jobs. Many of the args are
 # passed straight to weightExtraction.py at runtime.
 
+# An example call to the script would be:
+
+# python submitWeightExtraction.py --oot --depth --algo PFA1p --tag WithDepth_TTbar_OOT --nJobs 90
+
 import sys, os, argparse, shutil, time
 
 date_and_time=time.strftime("%Y%m%d_%H%M%S")
