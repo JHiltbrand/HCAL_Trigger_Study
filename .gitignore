@@ -3,6 +3,7 @@ condor
 **.pyc
 **.pdf
 **.tex
+**algo_weights.py
 input
 cmssw
 plots
