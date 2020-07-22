@@ -44,12 +44,13 @@ def lumiAnalysis(run):
         # Always skip tape-only stuff...
         if fileOnlyOnTape(aFile): continue
 
-        lumis = lumis4File(aFile)
+        print aFile
+        #lumis = lumis4File(aFile)
 
-        for lumi in lumis:
-            print "File '%s' contains lumis "%(aFile)
-            print lumis
-            break
+        #for lumi in lumis:
+        #    print "File '%s' contains lumis "%(aFile)
+        #    print lumis
+        #    break
 
 if __name__ == "__main__":
 
