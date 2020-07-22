@@ -4,6 +4,52 @@ import subprocess
 # then the corresponding file/dataset is on tape
 ONTAPE = ["MSS", "Export", "Buffer"]
 
+# Add the redirector to the files in the list
+def addRedirectors(files, redirector):
+
+    returnFiles = []
+    for file in files: returnFiles.append(file.replace("/store/", "%s//store/"%(redirector)))
+
+    return returnFiles 
+
+def addRedirector(file, redirector):
+
+    returnFile = file.replace("/store/", "%s//store/"%(redirector))
+
+    return returnFile 
+
+# From list of numbers make 2-tuple lists for continuous ranges
+def rangesFromList(alist):
+
+    tempList = []
+    for i in alist: tempList.append(int(i))
+
+    tempList.sort()
+
+    firstRange = 0; lastRange = 0; returnList = []
+    for ilumi in xrange(len(tempList)):
+        
+        if ilumi == 0: firstRange = tempList[ilumi]
+            
+        elif tempList[ilumi] - tempList[ilumi-1] > 1:
+            lastRange = tempList[ilumi-1]
+            returnList.append([firstRange, lastRange])
+            firstRange = tempList[ilumi]
+
+            if ilumi == len(tempList) - 1: returnList.append([firstRange, firstRange])
+
+        elif ilumi == len(tempList) - 1: returnList.append([firstRange, tempList[ilumi]])
+            
+    return returnList
+
+def getParents4File(file):
+
+    # Find the parent files (more than one!) for each file in the dataset
+    proc = subprocess.Popen(['dasgoclient', '--query=parent file=%s'%(file)], stdout=subprocess.PIPE)
+    parents = proc.stdout.readlines();  parents = [parent.rstrip() for parent in parents]
+
+    return parents
+
 # Given a dataset and a run of interest, get a list
 # of blocks that compose that run
 def blocks4Run(run, dataset):
@@ -42,7 +88,10 @@ def lumis4File(afile):
     for lumi in lumis:
         lumiList += lumi.rstrip().strip('[').strip(']').split(',')
     lumiList = [int(lumi) for lumi in lumiList]
-    return lumiList
+
+    returnList = rangesFromList(lumiList)
+
+    return returnList
 
 # For a given block, determine if it is on tape or not
 def blockOnlyOnTape(block):
