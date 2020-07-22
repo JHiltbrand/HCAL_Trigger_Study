@@ -194,7 +194,8 @@ if __name__ == '__main__':
     
     wStr = str(pm[scheme])
     wStr = wStr.replace("'", r'"')
-    if scheme in pm and scheme != "PFA2": customStr += "process.simHcalTriggerPrimitiveDigis.weightsQIE11 = %s"%(wStr)
+    if scheme in pm and scheme != "PFA2": customStr += "process.simHcalTriggerPrimitiveDigis.weightsQIE11 = %s\n"%(wStr)
+    if not crab: customStr += "process.source.lumisToProcess=cms.untracked.VLuminosityBlockRange(\"RUN:LUMI1-RUN:LUMI2\")\n"
 
     subprocess.call(["cat %s/scripts/analyze_HcalTrig_template.py > %s/scripts/analyze_HcalTrig.py"%(hcalDir, hcalDir)], shell=True)
     subprocess.call(["echo '%s' >> %s/scripts/analyze_HcalTrig.py"%(customStr, hcalDir)], shell=True)
@@ -217,8 +218,6 @@ if __name__ == '__main__':
 
     # If not submitting to CRAB, do all the work ourselves
     else:
-
-        customStr += "process.source.lumisToProcess=cms.untracked.VLuminosityBlockRange(\"RUN:LUMI1-RUN:LUMI2\")\n"
 
         # Get the list of input files to run over
         inputFiles = []
