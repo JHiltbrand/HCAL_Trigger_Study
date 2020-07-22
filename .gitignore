@@ -4,6 +4,9 @@ condor
 **.pdf
 **.tex
 **algo_weights.py
+**analyze_HcalTrig.py
+**crab_submit.py
+**crab_*
 input
 cmssw
 plots
