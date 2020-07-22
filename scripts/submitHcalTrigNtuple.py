@@ -209,12 +209,12 @@ if __name__ == '__main__':
 
         subprocess.call(["sed -i 's|process.source.lumis|#process.source.lumis|g' analyze_HcalTrig.py"], shell=True)
 
-        subprocess.call(["cat %s/scripts/crab_submit_template.py > %s/scripts/crab.py"%(hcalDir,hcalDir)], shell=True)
-        subprocess.call(["sed -i 's|PFA|%s|g' crab.py"%(scheme)], shell=True)
-        subprocess.call(["sed -i 's|USEPARENT|%s|g' crab.py"%(str(needParent))], shell=True)
-        subprocess.call(["sed -i 's|DATASET|%s|g' crab.py"%(dataset)], shell=True)
+        subprocess.call(["cat %s/scripts/crab_submit_template.py > %s/scripts/crab_submit.py"%(hcalDir,hcalDir)], shell=True)
+        subprocess.call(["sed -i 's|PFA|%s|g' crab_submit.py"%(scheme)], shell=True)
+        subprocess.call(["sed -i 's|USEPARENT|%s|g' crab_submit.py"%(str(needParent))], shell=True)
+        subprocess.call(["sed -i 's|DATASET|%s|g' crab_submit.py"%(dataset)], shell=True)
 
-        if not noSubmit: subprocess.call(["crab", "submit", "crab.py"])
+        if not noSubmit: subprocess.call(["crab", "submit", "crab_submit.py"])
 
     # If not submitting to CRAB, do all the work ourselves
     else:
