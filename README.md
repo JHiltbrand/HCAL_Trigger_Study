@@ -105,6 +105,9 @@ cd Debug/HcalDebug
 git checkout -b 110X_hcalPUSub_dev --track origin/110X_hcalPUSub_dev
 cd ../..
 
+# We also need to checkout packages dependent on HcalTrigPrimDigi classes
+git cms-addpkg EventFilter/HcalRawToDigi
+
 scram b -j8
 ```
 
