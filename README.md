@@ -100,7 +100,10 @@ scram b -j8
 
 git cms-merge-topic --unsafe JHiltbrand:110X_hcalPUSub_dev
 git clone git@github.com:JHiltbrand/cms-hcal-debug.git Debug/HcalDebug
+
+cd Debug/HcalDebug
 git checkout -b 110X_hcalPUSub_dev --track origin/110X_hcalPUSub_dev
+cd ../..
 
 scram b -j8
 ```
