@@ -19,14 +19,16 @@ ROOT.TH2.SetDefaultSumw2()
 # with fits, tables of weights and histograms).
 class WeightExtractor:
 
-    def __init__(self, scheme, inputFilePU, inputFileNOPU, outputPath, withDepth):
+    def __init__(self, scheme, data, inputFilePU, inputFileNOPU, outputPath, withDepth):
 
         self.outPath = outputPath              # Base outpath to write everything to
         self.cacheLoc = "%s/root"%(outputPath) # Location to cache histograms in root file
 
         self.withDepth = withDepth # Toggle if we should be extracting on per-depth basis
 
-        self.nopuUsed = inputFileNOPU != "" # When running on nugun sample there is no NOPU file
+        self.nopuUsed = inputFileNOPU != "NULL" # Special case when there is no NOPU file
+
+        self.data = data # Switch if we are running on data or not (will change how things are run
 
         # _My_ use of word "sample" is any TS >= SOI
         if scheme == "PFA2pp":
@@ -115,7 +117,11 @@ class WeightExtractor:
 
     def eventLoop(self, eventRange): 
 
+        # If eventRange goes unset, then the eventLoop should not be run
         if eventRange[0] == -1 or len(eventRange) == 2: return
+
+        # Use special case -2 to run over all events in the TTree
+        if eventRange[0] == -2: eventRange = xrange(0, self.ttreepu.GetEntries())
 
         # At the beginning, only initialize branches we need.
         # Hopefully this speeds up processing
@@ -166,6 +172,7 @@ class WeightExtractor:
                 # Always kill 8TS with 0 in TS3
                 if self.ttreepu.ts3[iTP] == 0: continue
 
+                # Start big if case, first if we are doing traditional running on MC with PU and NOPU info
                 if self.nopuUsed:
 
                     for jTP in xrange(hotStart, len(self.ttreenopu.ieta)):
@@ -236,8 +243,8 @@ class WeightExtractor:
                                     hotStart = jTP
                                     break
 
-                # If we hit this else the we are looking at nugun with no input nopu file
-                else:
+                # Next check if we are running in nu-gun mode (no NOPU info)
+                elif not self.nopuUsed and not self.data:
     
                     # We are here so we must have found a match!
                     #print "category   PU | event %s | ieta %d | iphi %d | depth %d | 8TS [%d, %d, %d, %d, %d, %d, %d, %d]"%(self.ttreepu.event, ieta, iphi, idepth, self.ttreepu.ts0[iTP], self.ttreepu.ts1[iTP],self.ttreepu.ts2[iTP],self.ttreepu.ts3[iTP],self.ttreepu.ts4[iTP],self.ttreepu.ts5[iTP],self.ttreepu.ts6[iTP],self.ttreepu.ts7[iTP])
@@ -268,7 +275,40 @@ class WeightExtractor:
                             weights = self.extractWeights(puPulse, nopuPulse)
                             
                             for ts in self.iWeights: self.weightHistos[idepth][abs(ieta)][ts][ts2Cut].Fill(weights[ts-1])
-    
+
+                # If we hit this then we are running on data (no NOPU info)
+                # Method only makes sense for PFA1p by looking at fraction SOI+1/SOI
+                elif self.data:
+
+                    puPulse    = numpy.zeros((8,1))
+                    puPulse[0] = self.ttreepu.ts0[iTP]
+                    puPulse[1] = self.ttreepu.ts1[iTP]
+                    puPulse[2] = self.ttreepu.ts2[iTP]
+                    puPulse[3] = self.ttreepu.ts3[iTP]
+                    puPulse[4] = self.ttreepu.ts4[iTP]
+                    puPulse[5] = self.ttreepu.ts5[iTP]
+                    puPulse[6] = self.ttreepu.ts6[iTP]
+                    puPulse[7] = self.ttreepu.ts7[iTP]
+
+                    # For running on iso bunch data, the pulse is only in TS3 so apply TS2 cut to TS3---a bit hacky
+                    for ts2Cut in self.ts2Cuts:
+                        if self.ttreepu.ts3[iTP] > ts2Cut:
+                            self.pulseShapesPU[idepth][abs(ieta)][ts2Cut].Fill(-3, self.ttreepu.ts0[iTP])
+                            self.pulseShapesPU[idepth][abs(ieta)][ts2Cut].Fill(-2, self.ttreepu.ts1[iTP])
+                            self.pulseShapesPU[idepth][abs(ieta)][ts2Cut].Fill(-1, self.ttreepu.ts2[iTP])
+                            self.pulseShapesPU[idepth][abs(ieta)][ts2Cut].Fill( 0, self.ttreepu.ts3[iTP])
+                            self.pulseShapesPU[idepth][abs(ieta)][ts2Cut].Fill( 1, self.ttreepu.ts4[iTP])
+                            self.pulseShapesPU[idepth][abs(ieta)][ts2Cut].Fill( 2, self.ttreepu.ts5[iTP])
+                            self.pulseShapesPU[idepth][abs(ieta)][ts2Cut].Fill( 3, self.ttreepu.ts6[iTP])
+                            self.pulseShapesPU[idepth][abs(ieta)][ts2Cut].Fill( 4, self.ttreepu.ts7[iTP])
+                            self.ietaDensity[idepth][ts2Cut].Fill(abs(ieta))
+
+                            # For iso bunch data and thinking about PFA1p, the weight is simply how much of
+                            # the pulse is in SOI+1 given SOI, so trivially calculate that here
+                            weights = [-999.0, float(self.ttreepu.ts4[iTP])/float(self.ttreepu.ts3[iTP])]
+                            
+                            for ts in self.iWeights: self.weightHistos[idepth][abs(ieta)][ts][ts2Cut].Fill(weights[ts-1])
+   
             print "Processed event %d => %d..."%(iEvent,eventRange[-1])
         
         # At the very end of the event loop, write the histograms to the cache file
@@ -788,11 +828,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--tag"       , dest="tag"       , help="Unique tag for output"    , type=str     , default="TAG")
     parser.add_argument("--fromCache" , dest="fromCache" , help="Read from cache file"     , default=False, action="store_true")
-    parser.add_argument("--contain"   , dest="contain"   , help="With pulse containment"   , default=False, action="store_true")
-    parser.add_argument("--depth"     , dest="depth"     , help="Extract with depth"       , default=False, action="store_true")
-    parser.add_argument("--oot"       , dest="oot"       , help="Use OOT sample"           , default=False, action="store_true")
-    parser.add_argument("--pu"        , dest="pu"        , help="Level of PU in sample"    , type=str     , default="50PU")
-    parser.add_argument("--nugun"     , dest="nugun"     , help="Run on nugun samples"     , default=False, action="store_true")
+    parser.add_argument("--data"      , dest="data"      , help="Deriving weights for data", default=False, action="store_true")
+    parser.add_argument("--pu"        , dest="pu"        , help="Path to PU file"          , type=str     , default="NULL")
+    parser.add_argument("--nopu"      , dest="nopu"      , help="Path to NOPU file"        , type=str     , default="NULL")
+    parser.add_argument("--depth"     , dest="depth"     , help="Extract per-depth"        , default=False, action="store_true")
     parser.add_argument("--scheme"    , dest="scheme"    , help="Which pulse filter scheme", type=str     , default="ALGO")
     parser.add_argument("--evtRange"  , dest="evtRange"  , help="Start and number"         , type=int     , nargs="+", default=[-1,1])
     args = parser.parse_args()
@@ -816,41 +855,20 @@ if __name__ == '__main__':
 
         eventRange = xrange(args.evtRange[0], args.evtRange[0]+args.evtRange[1]) 
 
-        # Here, I pigeon-hole myself by anticipating a very specific input file naming convention
-        # This removes the need to specify full file paths on the command line...
+        if args.data: eventRange = xrange(-2, 2)
 
-        # Default is to use OOT + IT sample: called 50PU.root
-        puStr = args.pu 
-        if args.oot: puStr += "_OOT"
-
-        # Default is to use the NoContain version of the sample
-        # Pulse containment was turned off during TP generation
-        containStr = "NoContain"
-        if args.contain: containStr = "Contain"
-
-        # Default is to use the NoDepth version of the sample
-        # Depths have been collapsed in each ieta during TP gen.
-        depthStr = "NoDepth"
-        if args.depth: depthStr = "Depth"
-
-        # Default is to use the TTbar samples
-        # Switch to NuGun if necessary
-        processStr = "TTbar"
-        if args.nugun: processStr = "NuGun"
-                    
         # Construct the anticipated file path format
-        PUFile   = "%s/%s/%s/%s/%s.root"  %(INPUTLOC, processStr, containStr, depthStr, puStr)
+        PUFile = args.pu 
 
         # If running on NuGun samples there is not a NOPU.root
-        noPUFile = ""
-        if not args.nugun: noPUFile = "%s/%s/%s/%s/NOPU.root"%(INPUTLOC, processStr, containStr, depthStr)
+        noPUFile = args.nopu
 
         # Finally, make an extractor and begin the event loop
-        theExtractor = WeightExtractor(args.scheme, PUFile, noPUFile, outPath, args.depth)
+        theExtractor = WeightExtractor(args.scheme, args.data, PUFile, noPUFile, outPath, args.depth)
         theExtractor.eventLoop(eventRange)
 
     else:
-        theExtractor = WeightExtractor(args.scheme, "", "", outPath, args.depth)
+        theExtractor = WeightExtractor(args.scheme, "NULL", "NULL", outPath, args.depth)
 
         theExtractor.loadHistograms()
         theExtractor.extractFitWeights(save=True, includeFit=False)
@@ -858,4 +876,4 @@ if __name__ == '__main__':
         theExtractor.getWeightSummary("Fit")
 
         #theExtractor.drawPulseShapes("PU")
-        #if not args.nugun: theExtractor.drawPulseShapes("NOPU")
+        #if args.nopu != "": theExtractor.drawPulseShapes("NOPU")
