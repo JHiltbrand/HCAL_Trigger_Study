@@ -132,7 +132,7 @@ cmsRun analyze_HcalTrig_dev.py FunName PFA2 NOPU
 
 * Here the argument `PFA2` is scheme that we would like to use when making trigger primitives.
 * The argument `FunName` will be used to give the output ntuple file a unique name, in this case `hcalNtuple_FunName.root`.
-* The `TTbar_OOT` or `NOPU` argument is parsed by the script and used to determine which GEN-SIM-DIGI-RAW files will be run on based on if-statement in the script. This if-statement is intended to be modified in order to run over a given set of files.
+* The `TTbar_OOT` or `NOPU` argument is parsed by the script and used to determine which files will be run on based on and if-statement in the script (put in by hand). This if-statement is intended to be modified in order to run over a given set of files.
 
 ### Batch Generation of Ntuples
 The other way of generating ntuples is to submit jobs to LPC condor or CRAB. This is most pertinent when running over entire datasets with many RAW files. Submitting to either condor or CRAB is acheived with the `submitHcalTrigNtuple.py` script.
@@ -144,7 +144,7 @@ A host of command line options are available:
 --depth      = Make ntuples using depth averaged version of weights.
 --dataset    = A DAS-friendly path to a dataset.
 --updown     = Make ntuples with the up/down variation of the specified weights.
---schemes    = The filter scheme to be used for TP reconstruction.
+--scheme     = The filter scheme to be used for TP reconstruction.
 --crab       = Submit jobs to CRAB.
 --era        = Which era was the dataset created.
 --data       = Are we running on data?
@@ -163,18 +163,18 @@ Thus, for example, to generate ntuples when reconstructing with the PFA1p with t
  ```
  python submitHcalTrigNtuples.py \
      --tag 20200527 \
-     --dataset /TTbar_14TeV_TuneCP5_Pythia8/Run3Summer19DR-106X_mcRun3_2021_realistic_v3-v2/GEN-SIM-DIGI-RAW \
-     --schemes PFA1p_PER_IETA \
+     --dataset /IsolatedBunch/Run2018D-12Nov2019_UL2018-v1/AOD \
+     --scheme PFA1p_PER_IETA \
      --era Run3 \
-     --globalTag 110X_mcRun3_2021_v6 \
-     --lumiSplit \
+     --data \
+     --globalTag 110X_dataRun2_v12 \
      --needParent
  ```
  
 In this case, the output ROOT files with the HCAL ntuples will be placed at:
 
 ```
-root://cmseos.fnal.gov///store/user/${USERNAME}/HCAL_Trigger_Study/hcalNtuples/TTbar/20200527/PFA1p_PER_IETA"
+root://cmseos.fnal.gov///store/user/${USERNAME}/HCAL_Trigger_Study/hcalNtuples/IsolatedBunch/20200527/PFA1p_PER_IETA"
 ```
  
 An equivalent form for submitting to CRAB would be:
@@ -182,17 +182,18 @@ An equivalent form for submitting to CRAB would be:
  python submitHcalTrigNtuples.py \
      --crab \
      --tag 20200527 \
-     --dataset /TTbar_14TeV_TuneCP5_Pythia8/Run3Summer19DR-106X_mcRun3_2021_realistic_v3-v2/GEN-SIM-DIGI-RAW \
-     --schemes PFA1p_PER_IETA \
+     --dataset /IsolatedBunch/Run2018D-12Nov2019_UL2018-v1/AOD \
+     --scheme PFA1p_PER_IETA \
      --era Run3 \
-     --globalTag 110X_mcRun3_2021_v6 \
+     --data \
+     --globalTag 110X_dataRun2_v12 \
      --needParent
  ```
  
 Here, the `crab_submit_template.py` is referenced and contains some of the options that had to be passed manually when submitting to condor. The output files will be delivered to:
 
 ```
-root://cmseos.fnal.gov///store/user/${USERNAME}/TTbar_14TeV_TuneCP5_Pythia8/HcalNtuples_PFA1p_PER_IETA_20200527/
+root://cmseos.fnal.gov///store/user/${USERNAME}/IsolatedBunch/HcalNtuples_PFA1p_PER_IETA_20200527/
 ```
 
 ### Making an Event Map
