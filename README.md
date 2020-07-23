@@ -254,8 +254,8 @@ Arguments to the submission script are very similar to `weightExtraction.py`:
 An example call to this script to extract weights for a single pu/nopu file pair would be:
 ```
 python scripts/submitWeightExtraction.py \
-    --pu   root://cmseos.fnal.gov///store/user/jhiltbra/some/path/to/pufile.root \
-    --nopu root://cmseos.fnal.gov///store/user/jhiltbra/some/path/to/nopufile.root \
+    --pu   root://cmseos.fnal.gov///store/user/${USERNAME}/some/path/to/pufile.root \
+    --nopu root://cmseos.fnal.gov///store/user/${USERNAME}/some/path/to/nopufile.root \
     --scheme PFA1p \
     --tag NoDepth_TTbar_OOT \
     --nJobs 30
@@ -264,7 +264,7 @@ python scripts/submitWeightExtraction.py \
 An example call to this script to extract weights in data (for a list of files) would be:
 ```
 python scripts/submitWeightExtraction.py \
-    --fileList /eos/uscms/store/user/jhiltbra/path/to/ntuples \
+    --fileList /eos/uscms/store/user/${USERNAME}/path/to/ntuples \
     --scheme PFA1p \
     --tag NoDepth_TTbar_OOT
 ```
