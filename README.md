@@ -4,7 +4,7 @@ This is a repository of scripts for extracting pulse filter weights, applying th
 
 DISCLAIMER: Any file paths implicitly assumed are customized for the author and will not work out-of-the-box.
 
-## Step 0: Initializing Workspace
+## Initializing a Workspace
 
 First one needs to setup a working area for everything. If on LPC, making a `nobackup` area is not necessary as it exists by default. If not at LPC it is encouraged to make a `nobackup` folder as it is assumed by many scripts in this repository.
 
@@ -18,7 +18,7 @@ cd HCAL_Trigger_Study
 mkdir cmssw plots input
 ```
 
-## Step 1: Producing DIGI-RAW Files With and Without Pileup
+## Producing DIGI-RAW Files With and Without Pileup
 
 Before we can proceed, we need to initialize a `CMSSW` area and compile:
 
@@ -80,9 +80,9 @@ process.mix.maxBunch = cms.int32(4)
 
 An equivalent `cmsRun` configuration file can be made for the case of no pileup and can be done by excluding the `--pileup_input` and `--pileup` flags and changing the name passed as `--fileout` when calling `cmsDriver.py`. After running `cmsRun ootpu_cfg.py` and waiting for many hours one will have a RAW root file with pileup mixed in.
 
-## Step 2: Making HCAL Ntuples
+## Making HCAL Ntuples
 
-Once the RAW files for the no pileup and out-of-time pileup scenarios have been produced, they are processed with the `cms-hcal-trigger` framework to produce manageable and simple-to-use ROOT TTrees (ntuples) with quantities that are relevant to extracting weights and studying trigger primitives.
+RAW files---like those produced during pileup mixing---are processed with the `cms-hcal-trigger` framework to produce manageable and simple-to-use ROOT TTrees (ntuples) with quantities that are relevant to extracting weights and studying trigger primitives.
 
 To start, we setup a second CMSSW release (assuming working on LPC) and pull in some customized code:
 
@@ -111,20 +111,87 @@ scram b -j8
 
 **then recompile again.**
 
-Once these steps are completed one can process the RAW files and make ntuples for extracting pulse filter weights. An example of doing this would be:
+Once these steps are completed one can process some RAW files and make ntuples for extracting pulse filter weights or studying trigger primitives.
+
+### Generating HCAL Ntuples Locally
+We can make ntuples by running `cmsRun` locally using the `analyze_HcalTrig_dev.py` configuration file. An example of doing this would be:
 
 ```
 cd $HOME/nobackup/HCAL_Trigger_Study/scripts
 
-cmsRun analyze_HcalTrig.py 27 PFA2 TTbar_OOT
-cmsRun analyze_HcalTrig.py 28 PFA2 NOPU
+cmsRun analyze_HcalTrig_dev.py FunName PFA2 TTbar_OOT
+cmsRun analyze_HcalTrig_dev.py FunName PFA2 NOPU
 ```
 
-Here `PFA2` is used more or less as a placeholder and is a meaningless option for this step. The `TTbar_OOT` and `NOPU` will be parsed by the script and be used to determine which GEN-SIM-DIGI-RAW files will be run on. In this example, the ttbar files with OOT PU mixed in and no PU mixed in will be run over. Lastly, the `27`, `28` will be used in the output root file name `hcalNtuples_27.root`.
+
+* Here the argument `PFA2` is scheme that we would like to use when making trigger primitives.
+* The argument `FunName` will be used to give the output ntuple file a unique name, in this case `hcalNtuple_FunName.root`.
+* The `TTbar_OOT` or `NOPU` argument is parsed by the script and used to determine which GEN-SIM-DIGI-RAW files will be run on based on if-statement in the script. This if-statement is intended to be modified in order to run over a given set of files.
+
+### Batch Generation of Ntuples
+The other way of generating ntuples is to submit jobs to LPC condor or CRAB. This is most pertinent when running over entire datasets with many RAW files. Submitting to either condor or CRAB is acheived with the `submitHcalTrigNtuple.py` script.
+A host of command line options are available:
+
+```
+--tag        = A unique tag to keep the output organized in a unique folder.
+--mean       = Make ntuples using mean version of weights.
+--depth      = Make ntuples using depth averaged version of weights.
+--dataset    = A DAS-friendly path to a dataset.
+--updown     = Make ntuples with the up/down variation of the specified weights.
+--schemes    = The filter scheme to be used for TP reconstruction.
+--crab       = Submit jobs to CRAB.
+--era        = Which era was the dataset created.
+--data       = Are we running on data?
+--lumiMask   = When submitting to CRAB... a json file for running on certain runs/lumis
+--globalTag  = The global tag to be used for reconstruction
+--lumiSplit  = When submitting to condor... should jobs be split by lumi chunks?
+--copyLocal  = When submitting to condor... should the RAW/AOD files be copied to worker node.
+--filelist   = When submitting to condor... a list of DAS-friendly paths to files to be run over.
+--run        = When submitting to condor... which run is being run over?
+--needParent = When wanting to run on RAW + AOD for RECO information.
+--noSubmit   = Don't submit to condor/CRAB
+```
+
+Thus, for example, to generate ntuples when reconstructing with the PFA1p with the per-ieta weights (including RECO information) one could submit to condor a la:
+
+ ```
+ python submitHcalTrigNtuples.py \
+     --tag 20200527 \
+     --dataset /TTbar_14TeV_TuneCP5_Pythia8/Run3Summer19DR-106X_mcRun3_2021_realistic_v3-v2/GEN-SIM-DIGI-RAW \
+     --schemes PFA1p_PER_IETA \
+     --era Run3 \
+     --globalTag 110X_mcRun3_2021_v6 \
+     --lumiSplit \
+     --needParent
+ ```
+ 
+In this case, the output ROOT files with the HCAL ntuples will be placed at:
+
+```
+root://cmseos.fnal.gov///store/user/${USERNAME}/HCAL_Trigger_Study/hcalNtuples/TTbar/20200527/PFA1p_PER_IETA"
+```
+ 
+An equivalent form for submitting to CRAB would be:
+ ```
+ python submitHcalTrigNtuples.py \
+     --crab \
+     --tag 20200527 \
+     --dataset /TTbar_14TeV_TuneCP5_Pythia8/Run3Summer19DR-106X_mcRun3_2021_realistic_v3-v2/GEN-SIM-DIGI-RAW \
+     --schemes PFA1p_PER_IETA \
+     --era Run3 \
+     --globalTag 110X_mcRun3_2021_v6 \
+     --needParent
+ ```
+ 
+Here, the `crab_submit_template.py` is referenced and contains some of the options that had to be passed manually when submitting to condor. The output files will be delivered to:
+
+```
+root://cmseos.fnal.gov///store/user/${USERNAME}/TTbar_14TeV_TuneCP5_Pythia8/HcalNtuples_PFA1p_PER_IETA_20200527/
+```
 
 ### Making an Event Map
 
-When we produce the ntuple files using the no pileup and out-of-time pileup DIGI-RAW files, although all the same events are present in each, the events are not necessarily in the same order. To help speedup looping over the events tree while extracting weights, one needs to generate an event map that maps an event record in the OOT PU file to the same event record in the NOPU file. This is done by running `makeEventMap.py`. A call such as:
+When we produce ntuple files using no pileup and out-of-time pileup DIGI-RAW files (for weights extraction), although all the same events are present in each, the events are not necessarily in the same order. To help speedup looping over the events tree while extracting weights, one needs to generate an event map that maps an event record in the OOT PU file to the same event record in the NOPU file. This is done by running `makeEventMap.py`. A call such as:
 
 ```
 python makeEventMap.py --oot
@@ -132,44 +199,13 @@ python makeEventMap.py --oot
 
 will generate a python file `eventMap_NoContain_NoDepth_OOT.py` with a python dictionary called `PU2NOPUMAP`. Copy this dictionary into the `pu2nopuMap.py` script.
 
-### Submitting to LPC Condor
-
-The `analyze_HcalTrig.py` can be used in batch mode when submitting jobs to condor on LPC. The script `submitHcalTrigNtuples.py` handles all the condor submission logistics and has several command line options.
-
-```
---tag       = A unique tag to keep the output organized in a unique folder.
---mean      = Make ntuples using mean version of weights.
---depth     = Make ntuples using depth averaged version of weights.
---dataset   = Either a DAS path or EOS path to DIGI-RAW files.
---updown    = Make ntuples with the up/down variation of the specified weights.
---versions  = A list of AVE and/or PER_IETA for the specified weights to use.
---schemes   = A list of PFA2p, PFA1p etc of which scheme to make ntuples with.
---noSubmit  = Don't submit to condor
-```
-
-Thus, for example, to generate ntuples when reconstructing with the PFA2p, PFA1p schemes and the mean, per-ieta and subdet average weights one could do:
-
- ```
- python submitHcalTrigNtuples.py \
-     --tag 20200126 \
-     --mean \
-     --dataset /TTbar_14TeV_TuneCP5_Pythia8/Run3Summer19DR-106X_mcRun3_2021_realistic_v3-v2/GEN-SIM-DIGI-RAW \
-     --versions PER_IETA AVE \
-     --schemes PFA1p PFA2p
- ```
-
-In this case, the output ROOT files with the HCAL ntuples will be placed at:
-
-```
-root://cmseos.fnal.gov///store/user/USERNAME/HCAL_Trigger_Study/hcalNtuples/TTbar/20200126/PFA(1,2)p_(PER_IETA,AVE)_MEAN"
-```
-
 ## Step 3: Extracting Pulse Filter Weights
 
 Weight extraction is done by the `weightExtraction.py` script in the `extraction` subfolder. The script is run in two successive executions. The first execution is intended for looping over the events in the HCAL ntuple files and extracts raw weights and writes raw histograms to a cache file. Then the script is run again to process the cache for making final plots and text files. This allows trivial plotting changes to be done quickly without having to loop over all the events again. Several commandline options can be specified and are documented below:
 
 ```
 --tag       = A unique tag to keep the output organized in its own folder.
+--data      = Are we running on data?
 --fromCache = Read back in cache file for making final plots and txt files (second step).
 --contain   = When extracting weights, read input files from within a "Contain" subfolder ("NoContain" default)
 --depth     = When extracting weights, read input files from within a "WithDepth" subfolder ("NoDepth" default)
