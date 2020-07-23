@@ -165,7 +165,7 @@ Thus, for example, to generate ntuples when reconstructing with the PFA1p with t
      --tag 20200527 \
      --dataset /IsolatedBunch/Run2018D-12Nov2019_UL2018-v1/AOD \
      --scheme PFA1p_PER_IETA \
-     --era Run3 \
+     --era Run2_2018 \
      --data \
      --globalTag 110X_dataRun2_v12 \
      --needParent
@@ -184,7 +184,7 @@ An equivalent form for submitting to CRAB would be:
      --tag 20200527 \
      --dataset /IsolatedBunch/Run2018D-12Nov2019_UL2018-v1/AOD \
      --scheme PFA1p_PER_IETA \
-     --era Run3 \
+     --era Run2_2018 \
      --data \
      --globalTag 110X_dataRun2_v12 \
      --needParent
