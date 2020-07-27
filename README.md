@@ -111,11 +111,13 @@ git cms-addpkg EventFilter/HcalRawToDigi
 scram b -j8
 ```
 
-**For making ntuples to be used for weights extraction it is important to turn off pulse containment correction in `CalibCalorimetry/HcalTPGAlgos/src/HcaluLUTTPGCoder.cc` by commenting out the line:**
+### Ntuples for Deriving Weights
 
-**```containmentCorrection = containmentCorrection2TSCorrected;```**
+For making ntuples to be used for weights extraction it is important to turn off pulse containment correction in `CalibCalorimetry/HcalTPGAlgos/src/HcaluLUTTPGCoder.cc` by commenting out [the line](https://github.com/JHiltbrand/cmssw/blob/110X_hcalPUSub_dev/CalibCalorimetry/HcalTPGAlgos/src/HcaluLUTTPGCoder.cc#L444):
 
-**then recompile again.**
+```containmentCorrection = containmentCorrection2TSCorrected;```
+
+then recompile again.
 
 Once these steps are completed one can process some RAW files and make ntuples for extracting pulse filter weights or studying trigger primitives.
 
