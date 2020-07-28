@@ -13,14 +13,14 @@ date_and_time=time.strftime("%Y%m%d_%H%M%S")
 
 usage = "usage: %prog [options]"
 parser = argparse.ArgumentParser(usage)
-parser.add_argument("--tag"     , dest="tag"     , help="Unique tag for output"   , type=str     , required=True)
-parser.add_argument("--scheme"  , dest="scheme"  , help="Which reco scheme"       , type=str     , required=True)
-parser.add_argument("--fileList", dest="fileList", help="Path to files to run on" , type=str     , default="NULL")
-parser.add_argument("--data"    , dest="data"    , help="Running on data"         , default=False, action="store_true")
-parser.add_argument("--pu"      , dest="pu"      , help="Path to pu file"         , type=str     , default="NULL")
-parser.add_argument("--nopu"    , dest="nopu"    , help="Path to nopu file"       , type=str     , default="NULL")
-parser.add_argument("--noSubmit", dest="noSubmit", help="do not submit to cluster", default=False, action="store_true")
-parser.add_argument("--nJobs"   , dest="nJobs"   , help="number of jobs"          , type=int     , default=30)
+parser.add_argument("--tag"      , dest="tag"      , help="Unique tag for output"   , type=str     , required=True)
+parser.add_argument("--scheme"   , dest="scheme"   , help="Which reco scheme"       , type=str     , required=True)
+parser.add_argument("--filesPath", dest="filesPath", help="Path to files to run on" , type=str     , default="NULL")
+parser.add_argument("--data"     , dest="data"     , help="Running on data"         , default=False, action="store_true")
+parser.add_argument("--pu"       , dest="pu"       , help="Path to pu file"         , type=str     , default="NULL")
+parser.add_argument("--nopu"     , dest="nopu"     , help="Path to nopu file"       , type=str     , default="NULL")
+parser.add_argument("--noSubmit" , dest="noSubmit" , help="do not submit to cluster", default=False, action="store_true")
+parser.add_argument("--nJobs"    , dest="nJobs"    , help="number of jobs"          , type=int     , default=30)
 
 args = parser.parse_args()
 
@@ -85,7 +85,7 @@ condorSubmit.write("Transfer_Input_Files = %s/%s, %s/pu2nopuMap.py\n"%(workingDi
 
 condorSubmit.write("x509userproxy = $ENV(X509_USER_PROXY)\n\n")
 
-if args.fileList == "NULL":
+if args.filesPath == "NULL":
 
     NEVENTS = 9000
     nJobs = args.nJobs
@@ -102,12 +102,14 @@ if args.fileList == "NULL":
 else:
 
     # If my name is in the path then we are on EOS
-    proc = subprocess.Popen(['xrdfs', 'root://cmseos.fnal.gov', 'ls', args.fileList], stdout=subprocess.PIPE) 
+    proc = subprocess.Popen(['xrdfs', 'root://cmseos.fnal.gov', 'ls', args.filesPath], stdout=subprocess.PIPE) 
     files = proc.stdout.readlines();  files = [file.rstrip() for file in files]
 
     # Prep the files for insertion into cmsRun config by adding the global redirector
     returnFiles = []
-    for file in files: returnFiles.append(file.replace("/eos/uscms/store/", "root://cmsxrootd.fnal.gov///store/"))
+    for file in files:
+        if "root" not in file: continue
+        returnFiles.append(file.replace("/eos/uscms/store/", "root://cmsxrootd.fnal.gov///store/"))
 
     iJob = 0
     for f in returnFiles:

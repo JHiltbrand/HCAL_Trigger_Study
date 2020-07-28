@@ -131,6 +131,8 @@ class WeightExtractor:
         self.ttreepu.SetBranchStatus("event", 1)
         self.ttreepu.SetBranchStatus("depth", 1)
 
+        if self.data: self.ttreepu.SetBranchStatus("bx", 1)
+
         if self.nopuUsed:
             self.ttreenopu.SetBranchStatus("*", 0)               
             self.ttreenopu.SetBranchStatus("ieta", 1)
@@ -280,6 +282,9 @@ class WeightExtractor:
                 # Method only makes sense for PFA1p by looking at fraction SOI+1/SOI
                 elif self.data:
 
+                    # For Run 324021, these BXs are the ends of trains
+                    #if self.ttreepu.bx not in [109,164,243,298,353,432,487,542,621,676,731,814,869,948,1003,1058,1137,1192,1247,1326,1381,1436,1515,1570,1625,1708,1763,1842,1897,1952,2031,2086,2141,2220,2275,2330,2409,2464,2519,2602,2657,2736,2791,2846,2925,2980,3035,3114,3169,3224,3303,3358,3413]: continue
+
                     puPulse    = numpy.zeros((8,1))
                     puPulse[0] = self.ttreepu.ts0[iTP]
                     puPulse[1] = self.ttreepu.ts1[iTP]
@@ -305,7 +310,7 @@ class WeightExtractor:
 
                             # For iso bunch data and thinking about PFA1p, the weight is simply how much of
                             # the pulse is in SOI+1 given SOI, so trivially calculate that here
-                            weights = [-999.0, float(self.ttreepu.ts4[iTP])/float(self.ttreepu.ts3[iTP])]
+                            weights = [-999.0, -float(self.ttreepu.ts4[iTP])/float(self.ttreepu.ts3[iTP])]
                             
                             for ts in self.iWeights: self.weightHistos[idepth][abs(ieta)][ts][ts2Cut].Fill(weights[ts-1])
    

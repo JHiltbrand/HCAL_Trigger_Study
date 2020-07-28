@@ -214,6 +214,9 @@ if __name__ == '__main__':
         subprocess.call(["sed -i 's|USEPARENT|%s|g' crab_submit.py"%(str(needParent))], shell=True)
         subprocess.call(["sed -i 's|DATASET|%s|g' crab_submit.py"%(dataset)], shell=True)
 
+        if lumiMask != "NULL": subprocess.call(["sed -i 's|LUMIMASK|\"%s\"|g' crab_submit.py"%(lumiMask)], shell=True)
+        else:                  subprocess.call(["sed -i 's|config.Data.lumiMask|#config.Data.lumiMask|g' crab_submit.py"], shell=True)
+
         if not noSubmit: subprocess.call(["crab", "submit", "crab_submit.py"])
 
     # If not submitting to CRAB, do all the work ourselves

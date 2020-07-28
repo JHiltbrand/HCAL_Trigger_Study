@@ -30,7 +30,8 @@ config.Data.outputDatasetTag = 'HcalNtuples_PFA_' + "DATASET".split("/")[1]
 
 # These values only make sense for processing data                                                                                           
 #    Select input data based on a lumi mask                                                                                                  
-#config.Data.lumiMask = LUMIMASK
+# Run2018D "https://cms-service-dqm.web.cern.ch/cms-service-dqm/CAF/certification/Collisions18/13TeV/Era/Prompt/Cert_320394-325273_13TeV_PromptReco_Collisions18_JSON_eraD.txt" 
+config.Data.lumiMask = LUMIMASK
 
 # Where the output files will be transmitted to                                                                                              
 config.Site.storageSite = "T3_US_FNALLPC"
