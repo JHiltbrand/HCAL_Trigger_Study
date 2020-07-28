@@ -100,16 +100,30 @@ scram b -j8
 
 git cms-merge-topic --unsafe JHiltbrand:110X_hcalPUSub_dev
 git clone git@github.com:JHiltbrand/cms-hcal-debug.git Debug/HcalDebug
+
+cd Debug/HcalDebug
 git checkout -b 110X_hcalPUSub_dev --track origin/110X_hcalPUSub_dev
+cd ../..
+
+# We also need to checkout packages dependent on HcalTrigPrimDigi classes
+git cms-addpkg EventFilter/HcalRawToDigi
 
 scram b -j8
 ```
 
-**For making ntuples to be used for weights extraction it is important to turn off pulse containment correction in `CalibCalorimetry/HcalTPGAlgos/src/HcaluLUTTPGCoder.cc` by commenting out the line:**
+### Ntuples for Deriving Weights
 
-**```containmentCorrection = containmentCorrection2TSCorrected;```**
+For making ntuples to be used for weights extraction it is important to turn off pulse containment correction in `CalibCalorimetry/HcalTPGAlgos/src/HcaluLUTTPGCoder.cc` by commenting out [the line](https://github.com/JHiltbrand/cmssw/blob/110X_hcalPUSub_dev/CalibCalorimetry/HcalTPGAlgos/src/HcaluLUTTPGCoder.cc#L444) and [this line](https://github.com/JHiltbrand/cmssw/blob/110X_hcalPUSub_dev/CalibCalorimetry/HcalTPGAlgos/src/HcaluLUTTPGCoder.cc#L447):
 
-**then recompile again.**
+```
+containmentCorrection = containmentCorrection2TSCorrected;
+
+...
+
+if ((contain1TSHB_ and cell.ietaAbs() <= topo_->lastHBRing()) or (contain1TSHE_ and cell.ietaAbs() > topo_->lastHBRing())) containmentCorrection = containmentCorrection1TS;
+```
+
+then recompile again.
 
 Once these steps are completed one can process some RAW files and make ntuples for extracting pulse filter weights or studying trigger primitives.
 
@@ -126,7 +140,7 @@ cmsRun analyze_HcalTrig_dev.py FunName PFA2 NOPU
 
 * Here the argument `PFA2` is scheme that we would like to use when making trigger primitives.
 * The argument `FunName` will be used to give the output ntuple file a unique name, in this case `hcalNtuple_FunName.root`.
-* The `TTbar_OOT` or `NOPU` argument is parsed by the script and used to determine which GEN-SIM-DIGI-RAW files will be run on based on if-statement in the script. This if-statement is intended to be modified in order to run over a given set of files.
+* The `TTbar_OOT` or `NOPU` argument is parsed by the script and used to determine which files will be run on based on and if-statement in the script (put in by hand). This if-statement is intended to be modified in order to run over a given set of files.
 
 ### Batch Generation of Ntuples
 The other way of generating ntuples is to submit jobs to LPC condor or CRAB. This is most pertinent when running over entire datasets with many RAW files. Submitting to either condor or CRAB is acheived with the `submitHcalTrigNtuple.py` script.
@@ -138,7 +152,7 @@ A host of command line options are available:
 --depth      = Make ntuples using depth averaged version of weights.
 --dataset    = A DAS-friendly path to a dataset.
 --updown     = Make ntuples with the up/down variation of the specified weights.
---schemes    = The filter scheme to be used for TP reconstruction.
+--scheme     = The filter scheme to be used for TP reconstruction.
 --crab       = Submit jobs to CRAB.
 --era        = Which era was the dataset created.
 --data       = Are we running on data?
@@ -157,18 +171,18 @@ Thus, for example, to generate ntuples when reconstructing with the PFA1p with t
  ```
  python submitHcalTrigNtuples.py \
      --tag 20200527 \
-     --dataset /TTbar_14TeV_TuneCP5_Pythia8/Run3Summer19DR-106X_mcRun3_2021_realistic_v3-v2/GEN-SIM-DIGI-RAW \
-     --schemes PFA1p_PER_IETA \
-     --era Run3 \
-     --globalTag 110X_mcRun3_2021_v6 \
-     --lumiSplit \
+     --dataset /IsolatedBunch/Run2018D-12Nov2019_UL2018-v1/AOD \
+     --scheme PFA1p_PER_IETA \
+     --era Run2_2018 \
+     --data \
+     --globalTag 110X_dataRun2_v12 \
      --needParent
  ```
  
 In this case, the output ROOT files with the HCAL ntuples will be placed at:
 
 ```
-root://cmseos.fnal.gov///store/user/${USERNAME}/HCAL_Trigger_Study/hcalNtuples/TTbar/20200527/PFA1p_PER_IETA"
+root://cmseos.fnal.gov///store/user/${USERNAME}/HCAL_Trigger_Study/hcalNtuples/IsolatedBunch/20200527/PFA1p_PER_IETA"
 ```
  
 An equivalent form for submitting to CRAB would be:
@@ -176,17 +190,18 @@ An equivalent form for submitting to CRAB would be:
  python submitHcalTrigNtuples.py \
      --crab \
      --tag 20200527 \
-     --dataset /TTbar_14TeV_TuneCP5_Pythia8/Run3Summer19DR-106X_mcRun3_2021_realistic_v3-v2/GEN-SIM-DIGI-RAW \
-     --schemes PFA1p_PER_IETA \
-     --era Run3 \
-     --globalTag 110X_mcRun3_2021_v6 \
+     --dataset /IsolatedBunch/Run2018D-12Nov2019_UL2018-v1/AOD \
+     --scheme PFA1p_PER_IETA \
+     --era Run2_2018 \
+     --data \
+     --globalTag 110X_dataRun2_v12 \
      --needParent
  ```
  
 Here, the `crab_submit_template.py` is referenced and contains some of the options that had to be passed manually when submitting to condor. The output files will be delivered to:
 
 ```
-root://cmseos.fnal.gov///store/user/${USERNAME}/TTbar_14TeV_TuneCP5_Pythia8/HcalNtuples_PFA1p_PER_IETA_20200527/
+root://cmseos.fnal.gov///store/user/${USERNAME}/IsolatedBunch/HcalNtuples_PFA1p_PER_IETA_20200527/
 ```
 
 ### Making an Event Map
@@ -199,7 +214,7 @@ python makeEventMap.py --oot
 
 will generate a python file `eventMap_NoContain_NoDepth_OOT.py` with a python dictionary called `PU2NOPUMAP`. Copy this dictionary into the `pu2nopuMap.py` script.
 
-## Step 3: Extracting Pulse Filter Weights
+## Extracting Pulse Filter Weights
 
 Weight extraction is done by the `weightExtraction.py` script in the `extraction` subfolder. The script is run in two successive executions. The first execution is intended for looping over the events in the HCAL ntuple files and extracts raw weights and writes raw histograms to a cache file. Then the script is run again to process the cache for making final plots and text files. This allows trivial plotting changes to be done quickly without having to loop over all the events again. Several commandline options can be specified and are documented below:
 
@@ -207,38 +222,73 @@ Weight extraction is done by the `weightExtraction.py` script in the `extraction
 --tag       = A unique tag to keep the output organized in its own folder.
 --data      = Are we running on data?
 --fromCache = Read back in cache file for making final plots and txt files (second step).
---contain   = When extracting weights, read input files from within a "Contain" subfolder ("NoContain" default)
---depth     = When extracting weights, read input files from within a "WithDepth" subfolder ("NoDepth" default)
---oot       = When extracting weights, read the OOT.root file instead of the 50PU.root file.
---nugun     = When extracting weights, assume we are running on nugun files (there will be no NOPU.root).
+--pu        = Path to pileup file
+--nopu      = Path to no pileup file
+--depth     = Toggle if extracting weights per-depth
 --scheme    = Specify which pulse filter to extract weights for (PFA1p, PFA1pp, PFA2p, PFA2pp)
 --evtRange  = First element is starting event to process and second element is number of events to process.
 ```
 
-A particular file/folder structure is anticipated when accessing the HCAL ntuple files. Most of the file path is built up based on the specified command line options. An example call of the `weightExtraction.py` script to extract no-depth weights for PFA1p, running over 100 events and starting at event 527 (in the OOT pileup file) would be:
+An example call of the `weightExtraction.py` script to extract no-depth weights for PFA1p, running over 100 events and starting at event 527 (in the OOT pileup file) would be:
 
 ```
-python scripts/weightExtraction.py --oot --depth --scheme PFA1p --tag WithDepth_TTbar_OOT --evtRange 527 100
+python scripts/weightExtraction.py
+    --pu   root://cmseos.fnal.gov///store/user/jhiltbra/some/path/to/pufile.root \
+    --nopu root://cmseos.fnal.gov///store/user/jhiltbra/some/path/to/nopufile.root \
+    --scheme PFA1p \
+    --tag WithDepth_TTbar_OOT \
+    --evtRange 527 100
 ```
 
-This will make an output file in `$HOME/nobackup/HCAL_Trigger_Study/plots/Weights/PFA1p/WithDepth_TTbar_OOT/root/histoCache_527.root`
+This will make an output file in the current working directory called `histoCache_527.root`.
 
-Since this script is also used to run in batch mode, each job would gets its own unique number and the above directory would be filled with `histoCache_XYZ.root` files. These need to be hadded together into a single `histoCache.root` file which will be looked for by the script when specifying the `--fromCache` option.
+### Submitting Jobs to LPC Condor
 
-### Running on LPC Condor
-
-A condor submission script, `submitWeightExtraction.py` is provided to submit jobs and speed up the extraction of weights when running on an entire input file. An example call to this script would be:
-
-```
-python scripts/submitWeightExtraction.py --oot --depth --scheme PFA1p --tag WithDepth_TTbar_OOT --nJobs 90
-```
-
-The output files will be placed in the same location mentioned when running locally and one needs to hadd these files.
+A condor submission script, `submitWeightExtraction.py` is provided to submit jobs and speed up the extraction of weights when running on an entire input file or multiple files.
+Arguments to the submission script are very similar to `weightExtraction.py`:
 
 ```
-cd $HOME/nobackup/HCAL_Trigger_Study/plots/Weights/PFA1p/TP/WithDepth_TTbar_OOT/root
-hadd histoCache.root histoCache_*
+--tag       = A unique tag to keep the output organized in its own folder.
+--data      = Are we running on data?
+--fileList  = Path to directory of files to run over
+--pu        = Path to pileup file
+--nopu      = Path to no pileup file
+--depth     = Toggle if extracting weights per-depth
+--scheme    = Specify which pulse filter to extract weights for (PFA1p, PFA1pp, PFA2p, PFA2pp)
+--nJobs     = How many jobs to run when processing a single pu/nopu file pair
+--noSubmit  = Do not submit jobs to the cluster
 ```
+
+An example call to this script to extract weights for a single pu/nopu file pair would be:
+```
+python scripts/submitWeightExtraction.py \
+    --pu   root://cmseos.fnal.gov///store/user/${USERNAME}/some/path/to/pufile.root \
+    --nopu root://cmseos.fnal.gov///store/user/${USERNAME}/some/path/to/nopufile.root \
+    --scheme PFA1p \
+    --tag NoDepth_TTbar_OOT \
+    --nJobs 30
+```
+
+An example call to this script to extract weights in data (for a list of files) would be:
+```
+python scripts/submitWeightExtraction.py \
+    --fileList /eos/uscms/store/user/${USERNAME}/path/to/ntuples \
+    --scheme PFA1p \
+    --tag NoDepth_TTbar_OOT
+```
+
+The output files will be placed in the directory `${HOME}/nobackup/HCAL_Trigger_Study/plots/Weights/PFA1p/NoDepth_TTbar_OOT/root and one needs to hadd these files to make a single `histoCache.root` file.
+
+Finally, the `weightExtraction.py` can be run locally on the cache file to make final plots and things. For example:
+
+```
+python scripts/extraction/weightExtraction.py \
+    --fromCache \
+    --scheme PFA1p \
+    --tag NoDepth_TTbar_OOT
+```
+
+This will put output plots in `${HOME}/nobackup/HCAL_Trigger_Study/plots/Weights/PFA1p/NoDepth_TTbar_OOT/{Fits,PulseShapes,weightSummary*.txt}`
 
 ## Step 4: Applying the Weights and Generating New Ntuples
 
