@@ -277,7 +277,7 @@ python scripts/extraction/submitWeightExtraction.py \
     --tag NoDepth_TTbar_OOT
 ```
 
-The output files will be placed in the directory `${HOME}/nobackup/HCAL_Trigger_Study/plots/Weights/PFA1p/NoDepth_TTbar_OOT/root and one needs to hadd these files to make a single `histoCache.root` file.
+The output files will be placed in the directory `${HOME}/nobackup/HCAL_Trigger_Study/plots/Weights/PFA1p/NoDepth_TTbar_OOT/root` and one needs to hadd these files to make a single `histoCache.root` file.
 
 Finally, the `weightExtraction.py` can be run locally on the cache file to make final plots and things. For example:
 
