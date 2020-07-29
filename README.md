@@ -104,6 +104,7 @@ git clone git@github.com:cms-hcal-trigger/cms-hcal-debug.git Debug/HcalDebug
 
 cd Debug/HcalDebug
 git remote add jchDebug git@github.com:JHiltbrand/cms-hcal-debug.git
+git fetch jchDebug
 git checkout -b 110X_hcalPUSub_dev --track jchDebug/110X_hcalPUSub_dev
 cd ../..
 
