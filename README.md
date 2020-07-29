@@ -233,8 +233,8 @@ An example call of the `weightExtraction.py` script to extract no-depth weights 
 
 ```
 python scripts/weightExtraction.py
-    --pu   root://cmseos.fnal.gov///store/user/jhiltbra/some/path/to/pufile.root \
-    --nopu root://cmseos.fnal.gov///store/user/jhiltbra/some/path/to/nopufile.root \
+    --pu   root://cmseos.fnal.gov///store/user/${USERNAME}/some/path/to/pufile.root \
+    --nopu root://cmseos.fnal.gov///store/user/${USERNAME}/some/path/to/nopufile.root \
     --scheme PFA1p \
     --tag WithDepth_TTbar_OOT \
     --evtRange 527 100
@@ -261,7 +261,7 @@ Arguments to the submission script are very similar to `weightExtraction.py`:
 
 An example call to this script to extract weights for a single pu/nopu file pair would be:
 ```
-python scripts/submitWeightExtraction.py \
+python scripts/extraction/submitWeightExtraction.py \
     --pu   root://cmseos.fnal.gov///store/user/${USERNAME}/some/path/to/pufile.root \
     --nopu root://cmseos.fnal.gov///store/user/${USERNAME}/some/path/to/nopufile.root \
     --scheme PFA1p \
@@ -271,13 +271,13 @@ python scripts/submitWeightExtraction.py \
 
 An example call to this script to extract weights in data (for a list of files) would be:
 ```
-python scripts/submitWeightExtraction.py \
-    --fileList /eos/uscms/store/user/${USERNAME}/path/to/ntuples \
+python scripts/extraction/submitWeightExtraction.py \
+    --filesPath /eos/uscms/store/user/${USERNAME}/path/to/ntuples \
     --scheme PFA1p \
     --tag NoDepth_TTbar_OOT
 ```
 
-The output files will be placed in the directory `${HOME}/nobackup/HCAL_Trigger_Study/plots/Weights/PFA1p/NoDepth_TTbar_OOT/root and one needs to hadd these files to make a single `histoCache.root` file.
+The output files will be placed in the directory `${HOME}/nobackup/HCAL_Trigger_Study/plots/Weights/PFA1p/NoDepth_TTbar_OOT/root` and one needs to hadd these files to make a single `histoCache.root` file.
 
 Finally, the `weightExtraction.py` can be run locally on the cache file to make final plots and things. For example:
 
@@ -293,5 +293,3 @@ This will put output plots in `${HOME}/nobackup/HCAL_Trigger_Study/plots/Weights
 ## Step 4: Applying the Weights and Generating New Ntuples
 
 When extracting weights for a pulse filter scheme `weightExtraction.py` will produce a `weightSummary(Mean/Fit)Python.py` file that will have the weights formatted in the correct format to be used by the trigger primitive reconstruction algorithm in CMSSW. To use these weights, copy them into the `algo_weights.py` file---into the `pfaWeightsMap`---in the `scripts` folder. This script gets used anytime `cmsRun analyze_HcalTrig.py` is run. Whatever key names are provided in the `pfaWeightsMap` dictionary can be used on the command line when running `analyze_HcalTrig.py` (see above section).
-
-Contrary to when generating ntuples to extract weights with, ensure that pulse containment is un-commented in `CalibCalorimetry/HcalTPGAlgos/src/HcaluLUTTPGCoder.cc` and recompile.
