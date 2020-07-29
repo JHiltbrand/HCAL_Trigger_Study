@@ -7,12 +7,13 @@ DISCLAIMER: Any file paths implicitly assumed are customized for the author and 
 ## Initializing a Workspace
 
 First one needs to setup a working area for everything. If on LPC, making a `nobackup` area is not necessary as it exists by default. If not at LPC it is encouraged to make a `nobackup` folder as it is assumed by many scripts in this repository.
+It is also recommended to fork this repository.
 
 ```
 mkdir -p $HOME/nobackup
 cd $HOME/nobackup/
 
-git clone git@github.com:JHiltbrand/HCAL_Trigger_Study.git
+git clone git@github.com:${GIT_USER}/HCAL_Trigger_Study.git
 cd HCAL_Trigger_Study
 
 mkdir cmssw plots input
@@ -99,10 +100,11 @@ cmsenv
 scram b -j8
 
 git cms-merge-topic --unsafe JHiltbrand:110X_hcalPUSub_dev
-git clone git@github.com:JHiltbrand/cms-hcal-debug.git Debug/HcalDebug
+git clone git@github.com:cms-hcal-trigger/cms-hcal-debug.git Debug/HcalDebug
 
 cd Debug/HcalDebug
-git checkout -b 110X_hcalPUSub_dev --track origin/110X_hcalPUSub_dev
+git remote add jchDebug git@github.com:JHiltbrand/cms-hcal-debug.git
+git checkout -b 110X_hcalPUSub_dev --track jchDebug/110X_hcalPUSub_dev
 cd ../..
 
 # We also need to checkout packages dependent on HcalTrigPrimDigi classes
