@@ -171,11 +171,11 @@ class WeightExtractor:
                 # Due to ordering once we hit HF ieta stop looping!
                 if abs(ieta) > 28: break 
 
-                # Always kill 8TS with 0 in TS3
-                if self.ttreepu.ts3[iTP] == 0: continue
-
                 # Start big if case, first if we are doing traditional running on MC with PU and NOPU info
                 if self.nopuUsed:
+
+                    # Always kill 8TS with 0 in TS3
+                    if self.ttreepu.ts3[iTP] == 0: continue
 
                     for jTP in xrange(hotStart, len(self.ttreenopu.ieta)):
                         jeta = self.ttreenopu.ieta[jTP]
@@ -248,6 +248,9 @@ class WeightExtractor:
                 # Next check if we are running in nu-gun mode (no NOPU info)
                 elif not self.nopuUsed and not self.data:
     
+                    # Always kill 8TS with 0 in TS3
+                    if self.ttreepu.ts3[iTP] == 0: continue
+
                     # We are here so we must have found a match!
                     #print "category   PU | event %s | ieta %d | iphi %d | depth %d | 8TS [%d, %d, %d, %d, %d, %d, %d, %d]"%(self.ttreepu.event, ieta, iphi, idepth, self.ttreepu.ts0[iTP], self.ttreepu.ts1[iTP],self.ttreepu.ts2[iTP],self.ttreepu.ts3[iTP],self.ttreepu.ts4[iTP],self.ttreepu.ts5[iTP],self.ttreepu.ts6[iTP],self.ttreepu.ts7[iTP])
 
@@ -282,6 +285,10 @@ class WeightExtractor:
                 # Method only makes sense for PFA1p by looking at fraction SOI+1/SOI
                 elif self.data:
 
+                    # Always kill 8TS with 0 in TS3 i.e. nothing from OOT from leaking into TS3
+                    # For iso bunch data, what would be a requirement on TS3 (> 0) should be applied to TS4, the tail from TS3
+                    if self.ttreepu.ts4[iTP] == 0: continue
+
                     # For Run 324021, these BXs are the ends of trains
                     #if self.ttreepu.bx not in [109,164,243,298,353,432,487,542,621,676,731,814,869,948,1003,1058,1137,1192,1247,1326,1381,1436,1515,1570,1625,1708,1763,1842,1897,1952,2031,2086,2141,2220,2275,2330,2409,2464,2519,2602,2657,2736,2791,2846,2925,2980,3035,3114,3169,3224,3303,3358,3413]: continue
 
@@ -295,7 +302,7 @@ class WeightExtractor:
                     puPulse[6] = self.ttreepu.ts6[iTP]
                     puPulse[7] = self.ttreepu.ts7[iTP]
 
-                    # For running on iso bunch data, the pulse is only in TS3 so apply TS2 cut to TS3---a bit hacky
+                    # For running on iso bunch data, the pulse is in TS3 so apply TS2 cut to TS3---a bit hacky
                     for ts2Cut in self.ts2Cuts:
                         if self.ttreepu.ts3[iTP] > ts2Cut:
                             self.pulseShapesPU[idepth][abs(ieta)][ts2Cut].Fill(-3, self.ttreepu.ts0[iTP])
@@ -542,17 +549,18 @@ class WeightExtractor:
         weightHisto.SetLineWidth(4)
         weightHisto.SetLineColor(ROOT.kBlue+2)
 
-        histoFit.SetLineColor(ROOT.kRed)
-        histoFit.SetLineWidth(5)
-        histoFit.SetLineStyle(7)
-
         someText = 0
-        if includeFit: someText = ROOT.TPaveText(0.21, 0.62, 0.56, 0.86, "trNDC")
-        else:          someText = ROOT.TPaveText(0.21, 0.62, 0.46, 0.86, "trNDC") 
-
         if includeFit:
+            someText = ROOT.TPaveText(0.21, 0.62, 0.56, 0.86, "trNDC")
             someText.AddText("Peak (Fit) = %3.2f"%(fitWeight))
             someText.AddText("#chi^{2} / ndf = %3.2f / %d"%(histoFit.GetChisquare(), histoFit.GetNDF()))
+            histoFit.SetLineColor(ROOT.kRed)
+            histoFit.SetLineWidth(5)
+            histoFit.SetLineStyle(7)
+
+        else:
+            someText = ROOT.TPaveText(0.21, 0.62, 0.46, 0.86, "trNDC") 
+
         someText.AddText("Mean = %3.2f"%(meanWeight))
         someText.AddText("RMS = %3.2f"%(histoRMS))
         someText.AddText("Entries = %d"%(weightHisto.GetEntries()))
@@ -610,54 +618,60 @@ class WeightExtractor:
 
                             for rebin, rHisto in rebinHistos.iteritems():
 
-                                masterFunc = 0
-                                name1 = "f1_i%d_d%d_r%d_w%d_TS2gt%d"%(ieta,depth,rebin,iWeight,ts2Cut); funcString1 = "[0]*TMath::CauchyDist(x, [1], [2])*TMath::Landau(-x, [3], [4])"; theFunc1 = 0
+                                if includeFit:
+                                    masterFunc = 0
+                                    name1 = "f1_i%d_d%d_r%d_w%d_TS2gt%d"%(ieta,depth,rebin,iWeight,ts2Cut); funcString1 = "[0]*TMath::CauchyDist(x, [1], [2])*TMath::Landau(-x, [3], [4])"; theFunc1 = 0
 
-                                theFunc1 = ROOT.TF1(name1, funcString1, -5, 2.0)
+                                    theFunc1 = ROOT.TF1(name1, funcString1, -5, 2.0)
 
-                                theFunc1.SetParameters(0.2, -0.3, 2.5, 0.3, 2.5)
-                                theFunc1.SetParNames("A", "mu", "sigma", "lmu", "lsigma")
-                                theFunc1.SetParLimits(0, 0.0, 5.0)
-                                theFunc1.SetParLimits(1, -5.0, 0.0)
-                                theFunc1.SetParLimits(2, 0.0, 5.0)
-                                theFunc1.SetParLimits(3, 0.0, 5.0)
-                                theFunc1.SetParLimits(3, 0.0, 25.0)
+                                    theFunc1.SetParameters(0.2, -0.3, 2.5, 0.3, 2.5)
+                                    theFunc1.SetParNames("A", "mu", "sigma", "lmu", "lsigma")
+                                    theFunc1.SetParLimits(0, 0.0, 5.0)
+                                    theFunc1.SetParLimits(1, -5.0, 0.0)
+                                    theFunc1.SetParLimits(2, 0.0, 5.0)
+                                    theFunc1.SetParLimits(3, 0.0, 5.0)
+                                    theFunc1.SetParLimits(3, 0.0, 25.0)
 
-                                name2 = "f2_i%d_d%d_r%d_w%d_TS2gt%d"%(ieta,depth,rebin,iWeight,ts2Cut); funcString2 = "[0]*TMath::Gaus(x, [1], [2])*TMath::Landau(-x, [3], [4])"; theFunc2 = 0
+                                    name2 = "f2_i%d_d%d_r%d_w%d_TS2gt%d"%(ieta,depth,rebin,iWeight,ts2Cut); funcString2 = "[0]*TMath::Gaus(x, [1], [2])*TMath::Landau(-x, [3], [4])"; theFunc2 = 0
 
-                                theFunc2 = ROOT.TF1(name2, funcString2, -5, 2.0)
+                                    theFunc2 = ROOT.TF1(name2, funcString2, -5, 2.0)
 
-                                theFunc2.SetParameters(0.2, -0.3, 2.5, 0.3, 2.5)
-                                theFunc2.SetParNames("A", "mu", "sigma", "lmu", "lsigma")
-                                theFunc2.SetParLimits(0, 0.0, 5.0)
-                                theFunc2.SetParLimits(1, -5.0, 0.0)
-                                theFunc2.SetParLimits(2, 0.0, 5.0)
-                                theFunc2.SetParLimits(3, 0.0, 5.0)
-                                theFunc2.SetParLimits(3, 0.0, 25.0)
+                                    theFunc2.SetParameters(0.2, -0.3, 2.5, 0.3, 2.5)
+                                    theFunc2.SetParNames("A", "mu", "sigma", "lmu", "lsigma")
+                                    theFunc2.SetParLimits(0, 0.0, 5.0)
+                                    theFunc2.SetParLimits(1, -5.0, 0.0)
+                                    theFunc2.SetParLimits(2, 0.0, 5.0)
+                                    theFunc2.SetParLimits(3, 0.0, 5.0)
+                                    theFunc2.SetParLimits(3, 0.0, 25.0)
 
-                                rHisto.Fit(name1, "QMREWL") # https://root.cern.ch/doc/master/classTH1.html#a63eb028df86bc86c8e20c989eb23fb2a
-                                rHisto.Fit(name2, "QMREWL") # https://root.cern.ch/doc/master/classTH1.html#a63eb028df86bc86c8e20c989eb23fb2a
-                                
-                                chi1ndf = 0; chi2ndf = 0 
-                                try: chi1ndf = theFunc1.GetChisquare() / theFunc1.GetNDF()
-                                except: chi1ndf = 999999
-                                try: chi2ndf = theFunc2.GetChisquare() / theFunc2.GetNDF()
-                                except: chi2ndf = 999998
+                                    rHisto.Fit(name1, "QMREWL") # https://root.cern.ch/doc/master/classTH1.html#a63eb028df86bc86c8e20c989eb23fb2a
+                                    rHisto.Fit(name2, "QMREWL") # https://root.cern.ch/doc/master/classTH1.html#a63eb028df86bc86c8e20c989eb23fb2a
+                                    
+                                    chi1ndf = 0; chi2ndf = 0 
+                                    try: chi1ndf = theFunc1.GetChisquare() / theFunc1.GetNDF()
+                                    except: chi1ndf = 999999
+                                    try: chi2ndf = theFunc2.GetChisquare() / theFunc2.GetNDF()
+                                    except: chi2ndf = 999998
 
-                                #if ieta <= 20: masterFunc = theFunc1
-                                #else: masterFunc = theFunc2
+                                    #if ieta <= 20: masterFunc = theFunc1
+                                    #else: masterFunc = theFunc2
 
-                                if   chi1ndf > 0 and chi1ndf < chi2ndf: masterFunc = theFunc1
-                                elif chi2ndf > 0 and chi2ndf < chi1ndf: masterFunc = theFunc2
-                                else: masterFunc = theFunc1
+                                    if   chi1ndf > 0 and chi1ndf < chi2ndf: masterFunc = theFunc1
+                                    elif chi2ndf > 0 and chi2ndf < chi1ndf: masterFunc = theFunc2
+                                    else: masterFunc = theFunc1
 
-                                masterFunc.SetNpx(1000);
+                                    masterFunc.SetNpx(1000);
 
-                                # Get weight from peak of fit function (the mode)
-                                # Stat error is the "width" parameter of the fit / number of entries
-                                rebinFitWeights[rebin] = masterFunc.GetMaximumX(-5.0,5.0)
-                                rebinFitStatErrors[rebin] = masterFunc.GetParameter("sigma") / math.sqrt(numEntries) 
-                                rebinFits[rebin] = masterFunc
+                                    # Get weight from peak of fit function (the mode)
+                                    # Stat error is the "width" parameter of the fit / number of entries
+                                    rebinFitWeights[rebin] = masterFunc.GetMaximumX(-5.0,5.0)
+                                    rebinFitStatErrors[rebin] = masterFunc.GetParameter("sigma") / math.sqrt(numEntries) 
+                                    rebinFits[rebin] = masterFunc
+
+                                else:
+                                    rebinFitWeights[rebin] = -999.0
+                                    rebinFitStatErrors[rebin] = -999.0 
+                                    rebinFits[rebin] = 0 
 
                                 # Get the weight from the simple mean of the distribution
                                 # The stat error here is the simple stddev / number of entries
@@ -873,12 +887,12 @@ if __name__ == '__main__':
         theExtractor.eventLoop(eventRange)
 
     else:
-        theExtractor = WeightExtractor(args.scheme, "NULL", "NULL", outPath, args.depth)
+        theExtractor = WeightExtractor(args.scheme, args.data, "NULL", "NULL", outPath, args.depth)
 
         theExtractor.loadHistograms()
         theExtractor.extractFitWeights(save=True, includeFit=False)
         theExtractor.getWeightSummary("Mean")
         theExtractor.getWeightSummary("Fit")
 
-        #theExtractor.drawPulseShapes("PU")
-        #if args.nopu != "": theExtractor.drawPulseShapes("NOPU")
+        theExtractor.drawPulseShapes("PU")
+        if args.nopu != "": theExtractor.drawPulseShapes("NOPU")
