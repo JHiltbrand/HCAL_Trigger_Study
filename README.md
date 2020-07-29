@@ -293,6 +293,6 @@ python scripts/extraction/weightExtraction.py \
 
 This will put output plots in `${HOME}/nobackup/HCAL_Trigger_Study/plots/Weights/PFA1p/NoDepth_TTbar_OOT/{Fits,PulseShapes,weightSummary*.txt}`
 
-## Step 4: Applying the Weights and Generating New Ntuples
+## Applying the Weights and Generating New Ntuples
 
 When extracting weights for a pulse filter scheme `weightExtraction.py` will produce a `weightSummary(Mean/Fit)Python.py` file that will have the weights formatted in the correct format to be used by the trigger primitive reconstruction algorithm in CMSSW. To use these weights, copy them into the `algo_weights.py` file---into the `pfaWeightsMap`---in the `scripts` folder. This script gets used anytime `cmsRun analyze_HcalTrig.py` is run. Whatever key names are provided in the `pfaWeightsMap` dictionary can be used on the command line when running `analyze_HcalTrig.py` (see above section).
