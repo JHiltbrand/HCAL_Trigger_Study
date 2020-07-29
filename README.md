@@ -37,7 +37,7 @@ cmsenv
 # PU mixing behavior
 git cms-addpkg Mixing/Base
 
-scram b -j8
+scram b -j 4
 ```
 
 The first step is to take a ttbar and/or nugun GEN-SIM file and produce two daughter RAW files for exactly two different pileup scenarios. One daughter file will have no pileup mixed in while the other file will have pileup mixed in for whichever special pileup scenario is being studied.
@@ -97,7 +97,7 @@ cmsrel CMSSW_11_0_2
 cd CMSSW_11_0_2/src
 cmsenv
 
-scram b -j8
+scram b -j 4
 
 git cms-merge-topic --unsafe JHiltbrand:110X_hcalPUSub_dev
 git clone git@github.com:cms-hcal-trigger/cms-hcal-debug.git Debug/HcalDebug
@@ -111,7 +111,7 @@ cd ../..
 # We also need to checkout packages dependent on HcalTrigPrimDigi classes
 git cms-addpkg EventFilter/HcalRawToDigi
 
-scram b -j8
+scram b -j 4
 ```
 
 ### Ntuples for Deriving Weights
