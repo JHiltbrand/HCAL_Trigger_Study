@@ -4,7 +4,7 @@ This is a repository of scripts for extracting pulse filter weights, applying th
 
 DISCLAIMER: Any file paths implicitly assumed are customized for the author and will not work out-of-the-box.
 
-## Initializing a Workspace
+## 1. Initializing a Workspace
 
 First one needs to setup a working area for everything. If on LPC, making a `nobackup` area is not necessary as it exists by default. If not at LPC it is encouraged to make a `nobackup` folder as it is assumed by many scripts in this repository.
 It is also recommended to fork this repository.
@@ -19,7 +19,7 @@ cd HCAL_Trigger_Study
 mkdir cmssw plots input
 ```
 
-## Producing DIGI-RAW Files With and Without Pileup
+## 2. Producing DIGI-RAW Files With and Without Pileup
 
 Before we can proceed, we need to initialize a `CMSSW` area and compile:
 
@@ -81,7 +81,7 @@ process.mix.maxBunch = cms.int32(4)
 
 An equivalent `cmsRun` configuration file can be made for the case of no pileup and can be done by excluding the `--pileup_input` and `--pileup` flags and changing the name passed as `--fileout` when calling `cmsDriver.py`. After running `cmsRun ootpu_cfg.py` and waiting for many hours one will have a RAW root file with pileup mixed in.
 
-## Making HCAL Ntuples
+## 3. Making HCAL Ntuples
 
 RAW files---like those produced during pileup mixing---are processed with the `cms-hcal-trigger` framework to produce manageable and simple-to-use ROOT TTrees (ntuples) with quantities that are relevant to extracting weights and studying trigger primitives.
 
@@ -114,7 +114,7 @@ git cms-addpkg EventFilter/HcalRawToDigi
 scram b -j 4
 ```
 
-### Ntuples for Deriving Weights
+### 3.1 Ntuples for Deriving Weights
 
 For making ntuples to be used for weights extraction it is important to turn off pulse containment correction in `CalibCalorimetry/HcalTPGAlgos/src/HcaluLUTTPGCoder.cc` by commenting out [the line](https://github.com/JHiltbrand/cmssw/blob/110X_hcalPUSub_dev/CalibCalorimetry/HcalTPGAlgos/src/HcaluLUTTPGCoder.cc#L444) and [this line](https://github.com/JHiltbrand/cmssw/blob/110X_hcalPUSub_dev/CalibCalorimetry/HcalTPGAlgos/src/HcaluLUTTPGCoder.cc#L447):
 
@@ -130,7 +130,7 @@ then recompile again.
 
 Once these steps are completed one can process some RAW files and make ntuples for extracting pulse filter weights or studying trigger primitives.
 
-### Generating HCAL Ntuples Locally
+### 3.2 Generating HCAL Ntuples Locally
 We can make ntuples by running `cmsRun` locally using the `analyze_HcalTrig_dev.py` configuration file. An example of doing this would be:
 
 ```
@@ -145,7 +145,7 @@ cmsRun analyze_HcalTrig_dev.py FunName PFA2 NOPU
 * The argument `FunName` will be used to give the output ntuple file a unique name, in this case `hcalNtuple_FunName.root`.
 * The `TTbar_OOT` or `NOPU` argument is parsed by the script and used to determine which files will be run on based on and if-statement in the script (put in by hand). This if-statement is intended to be modified in order to run over a given set of files.
 
-### Batch Generation of Ntuples
+### 3.3 Batch Generation of Ntuples
 The other way of generating ntuples is to submit jobs to LPC condor or CRAB. This is most pertinent when running over entire datasets with many RAW files. Submitting to either condor or CRAB is acheived with the `submitHcalTrigNtuple.py` script.
 A host of command line options are available:
 
@@ -207,7 +207,7 @@ Here, the `crab_submit_template.py` is referenced and contains some of the optio
 root://cmseos.fnal.gov///store/user/${USERNAME}/IsolatedBunch/HcalNtuples_PFA1p_PER_IETA_20200527/
 ```
 
-### Making an Event Map
+### 3.4 Making an Event Map
 
 When we produce ntuple files using no pileup and out-of-time pileup DIGI-RAW files (for weights extraction), although all the same events are present in each, the events are not necessarily in the same order. To help speedup looping over the events tree while extracting weights, one needs to generate an event map that maps an event record in the OOT PU file to the same event record in the NOPU file. This is done by running `makeEventMap.py`. A call such as:
 
@@ -217,7 +217,7 @@ python makeEventMap.py --oot
 
 will generate a python file `eventMap_NoContain_NoDepth_OOT.py` with a python dictionary called `PU2NOPUMAP`. Copy this dictionary into the `pu2nopuMap.py` script.
 
-## Extracting Pulse Filter Weights
+## 4. Extracting Pulse Filter Weights
 
 Weight extraction is done by the `weightExtraction.py` script in the `extraction` subfolder. The script is run in two successive executions. The first execution is intended for looping over the events in the HCAL ntuple files and extracts raw weights and writes raw histograms to a cache file. Then the script is run again to process the cache for making final plots and text files. This allows trivial plotting changes to be done quickly without having to loop over all the events again. Several commandline options can be specified and are documented below:
 
@@ -245,7 +245,7 @@ python scripts/weightExtraction.py
 
 This will make an output file in the current working directory called `histoCache_527.root`.
 
-### Submitting Jobs to LPC Condor
+### 4.1 Submitting Jobs to LPC Condor
 
 A condor submission script, `submitWeightExtraction.py` is provided to submit jobs and speed up the extraction of weights when running on an entire input file or multiple files.
 Arguments to the submission script are very similar to `weightExtraction.py`:
@@ -293,6 +293,6 @@ python scripts/extraction/weightExtraction.py \
 
 This will put output plots in `${HOME}/nobackup/HCAL_Trigger_Study/plots/Weights/PFA1p/NoDepth_TTbar_OOT/{Fits,PulseShapes,weightSummary*.txt}`
 
-## Applying the Weights and Generating New Ntuples
+## 5. Applying the Weights and Generating New Ntuples
 
 When extracting weights for a pulse filter scheme `weightExtraction.py` will produce a `weightSummary(Mean/Fit)Python.py` file that will have the weights formatted in the correct format to be used by the trigger primitive reconstruction algorithm in CMSSW. To use these weights, copy them into the `algo_weights.py` file---into the `pfaWeightsMap`---in the `scripts` folder. This script gets used anytime `cmsRun analyze_HcalTrig.py` is run. Whatever key names are provided in the `pfaWeightsMap` dictionary can be used on the command line when running `analyze_HcalTrig.py` (see above section).
