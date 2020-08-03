@@ -109,7 +109,9 @@ git checkout -b 110X_hcalPUSub_dev --track jchDebug/110X_hcalPUSub_dev
 cd ../..
 
 # We also need to checkout packages dependent on HcalTrigPrimDigi classes
+# Also checkout CaloTPG since we make changes in coder
 git cms-addpkg EventFilter/HcalRawToDigi
+git cms-addpkg CalibCalorimetry/CaloTPG
 
 scram b -j 4
 ```
