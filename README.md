@@ -138,14 +138,14 @@ We can make ntuples by running `cmsRun` locally using the `analyze_HcalTrig_dev.
 ```
 cd $HOME/nobackup/HCAL_Trigger_Study/scripts
 
-cmsRun analyze_HcalTrig_dev.py FunName PFA2 TTbar_OOT
+cmsRun analyze_HcalTrig_dev.py FunName PFA2 Data
 cmsRun analyze_HcalTrig_dev.py FunName PFA2 NOPU
 ```
 
 
 * Here the argument `PFA2` is scheme that we would like to use when making trigger primitives.
 * The argument `FunName` will be used to give the output ntuple file a unique name, in this case `hcalNtuple_FunName.root`.
-* The `TTbar_OOT` or `NOPU` argument is parsed by the script and used to determine which files will be run on based on and if-statement in the script (put in by hand). This if-statement is intended to be modified in order to run over a given set of files.
+* The `Data` or `NOPU` argument is parsed by the script and used to determine which files will be run on based on and if-statement in the script (put in by hand). This if-statement is intended to be modified in order to run over a given set of files.
 
 ### 3.3 Batch Generation of Ntuples
 The other way of generating ntuples is to submit jobs to LPC condor or CRAB. This is most pertinent when running over entire datasets with many RAW files. Submitting to either condor or CRAB is acheived with the `submitHcalTrigNtuple.py` script.
