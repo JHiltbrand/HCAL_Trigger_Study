@@ -20,3 +20,5 @@ scripts/analyze_HcalTrig_TEST.py
 **.swp
 docker_stderror
 **CMSSW**
+**MAHI_display**
+**.json
