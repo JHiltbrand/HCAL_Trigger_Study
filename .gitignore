@@ -19,3 +19,4 @@ scripts/analyze_HcalTrig_TEST.py
 **.txt
 **.swp
 docker_stderror
+**CMSSW**
